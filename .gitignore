@@ -1,0 +1,51 @@
+# === GODOT SPECIFIC ===
+# Автоматически генерируемые файлы Godot
+.godot/
+*.import
+*.godot
+.import/
+export.cfg
+export_presets.cfg
+
+# Кэш и временные файлы Godot
+*.tmp
+*.log
+*.translation
+
+# === PYTHON ===
+# Виртуальное окружение (каждый создает свое локально)
+venv/
+env/
+ENV/
+.venv/
+.env/
+*.pyc
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Датасеты (они обычно тяжелые)
+*.csv
+*.json
+
+# Секреты (пароли, ключи)
+.env
+*.env
+
+# Логи
+*.log
+
+
+# === IDE (у каждого свои настройки) ===
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+*.iws
+
+# Python зависимости (но файл зависимостей - в Git!)
+# Сами библиотеки НЕ храним, только requirements.txt
