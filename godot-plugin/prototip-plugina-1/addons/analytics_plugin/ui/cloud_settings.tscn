@@ -1,0 +1,106 @@
+[gd_scene format=3 uid="uid://1g7tcm120jrm"]
+
+[ext_resource type="Script" uid="uid://brjkvx32yg7vi" path="res://addons/analytics_plugin/ui/cloud_settings.gd" id="1_xxbif"]
+
+[node name="Window" type="Window" unique_id=1140997187]
+oversampling_override = 1.0
+title = "Настройки облачного режима"
+size = Vector2i(500, 400)
+visible = false
+script = ExtResource("1_xxbif")
+
+[node name="MainVBox" type="VBoxContainer" parent="." unique_id=1499858855]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="MainVBox" unique_id=1526419411]
+layout_mode = 2
+text = "НАСТРОЙКИ ОБЛАЧНОГО РЕЖИМА"
+
+[node name="HSeparator" type="HSeparator" parent="MainVBox" unique_id=583552519]
+layout_mode = 2
+
+[node name="UrlHBox" type="HBoxContainer" parent="MainVBox" unique_id=1184620932]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MainVBox/UrlHBox" unique_id=1738779747]
+layout_mode = 2
+text = "URL сервера:"
+
+[node name="UrlInput" type="LineEdit" parent="MainVBox/UrlHBox" unique_id=2088818198]
+layout_mode = 2
+text = "http://localhost:8000/analytics"
+
+[node name="ApiHBox" type="HBoxContainer" parent="MainVBox" unique_id=701187375]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MainVBox/ApiHBox" unique_id=766206678]
+layout_mode = 2
+text = "API ключ:"
+
+[node name="ApiInput" type="LineEdit" parent="MainVBox/ApiHBox" unique_id=1112063385]
+layout_mode = 2
+secret = true
+
+[node name="HSeparator" type="HSeparator" parent="MainVBox/ApiHBox" unique_id=1386025561]
+layout_mode = 2
+
+[node name="BufferHBox" type="HBoxContainer" parent="MainVBox" unique_id=1897488094]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MainVBox/BufferHBox" unique_id=259682467]
+layout_mode = 2
+text = "Размер буфера:"
+
+[node name="BufferSizeSpin" type="SpinBox" parent="MainVBox/BufferHBox" unique_id=1475988980]
+layout_mode = 2
+min_value = 10.0
+max_value = 1000.0
+value = 100.0
+
+[node name="IntervalHBox" type="HBoxContainer" parent="MainVBox" unique_id=1549570700]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MainVBox/IntervalHBox" unique_id=602818954]
+layout_mode = 2
+text = "Автоотправка каждые:"
+
+[node name="IntervalSpin" type="SpinBox" parent="MainVBox/IntervalHBox" unique_id=264020624]
+layout_mode = 2
+min_value = 1.0
+max_value = 300.0
+value = 30.0
+
+[node name="Label2" type="Label" parent="MainVBox/IntervalHBox" unique_id=2046881215]
+layout_mode = 2
+text = "сек"
+
+[node name="HSeparator2" type="HSeparator" parent="MainVBox" unique_id=531213850]
+layout_mode = 2
+
+[node name="RetryCheck" type="CheckBox" parent="MainVBox" unique_id=187506482]
+layout_mode = 2
+button_pressed = true
+text = "☑ Автоматически повторять при ошибке"
+
+[node name="CacheCheck" type="CheckBox" parent="MainVBox" unique_id=358463032]
+layout_mode = 2
+text = "☐ Сохранять кэш при отсутствии сети"
+
+[node name="HSeparator3" type="HSeparator" parent="MainVBox" unique_id=1124246943]
+layout_mode = 2
+
+[node name="ButtonsHBox" type="HBoxContainer" parent="MainVBox" unique_id=239269740]
+layout_mode = 2
+
+[node name="SaveBtn" type="Button" parent="MainVBox/ButtonsHBox" unique_id=1558932102]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6060261, 0.99999994, 0.2014007, 1)
+text = "СОХРАНИТЬ"
+
+[node name="CancelBtn" type="Button" parent="MainVBox/ButtonsHBox" unique_id=176559784]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8268252, 0.82042825, 1)
