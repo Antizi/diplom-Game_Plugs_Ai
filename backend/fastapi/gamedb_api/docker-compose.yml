@@ -1,26 +1,41 @@
-version: '3.8'  # Версия формата Compose
+version: '3.8'
 
 services:
-  # Сервис базы данных PostgreSQL
   postgres:
-    image: postgres:16                # Используем официальный образ PostgreSQL 16
-    container_name: postgres-gamedb    # Имя контейнера (удобно для команд)
-    restart: always                    # Автоматически перезапускать, если упал
+    image: postgres:16   # всегда последняя стабильная
+    container_name: postgres-gamedb
+    restart: always
     environment:
-      POSTGRES_USER: postgres          # Имя пользователя
-      POSTGRES_PASSWORD: 123 # Пароль
-      POSTGRES_DB: gamedb               # Имя базы данных, которая создастся при старте
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: gamedb
     ports:
-      - "5432:5432"                     # Проброс порта: порт хоста 5432 -> порт контейнера 5432
+      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data # Монтируем том для сохранения данных
-    healthcheck:                         # Проверка здоровья (для зависимостей)
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-# Определяем том для данных PostgreSQL
+  backend:
+    build: .
+    container_name: fastapi-gamedb
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: your_password
+      DB_HOST: postgres          # имя сервиса, по которому контейнеры видят друг друга
+      DB_PORT: 5432
+      DB_NAME: gamedb
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # volumes:                   # если нужно пробросить код для разработки (не обязательно)
+    #   - ./gamedb_backend:/app/gamedb_backend
+
 volumes:
   pgdata:
-    # Том будет создан автоматически, данные сохранятся даже после удаления контейнера

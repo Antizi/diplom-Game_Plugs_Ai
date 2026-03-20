@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, DateTime, JSON, ForeignKey, Index
+from sqlalchemy import Column, String, Integer, Float, DateTime, JSON, ForeignKey, Index, Interval
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from gamedb_backend.database import Base
@@ -10,7 +10,7 @@ class Player(Base):
     player_id = Column(String(255), primary_key=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_session_id = Column(UUID(as_uuid=True), nullable=True)
-    total_playtime = Column(Float)  # INTERVAL в Python можно представить как число (секунды) или использовать Interval, но для простоты оставим Float
+    total_playtime = Column(Interval)  # INTERVAL в Python можно представить как число (секунды) или использовать Interval, но для простоты оставим Float
 
 
 class Session(Base):
@@ -40,3 +40,13 @@ class Event(Base):
         Index("idx_events_session_id", "session_id"),
         Index("idx_events_created_at", "created_at"),
     )
+
+class AdaptationState(Base):
+    __tablename__ = "adaptation_state"
+
+    adaptation_id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.session_id"), unique=True, nullable=False)
+    player_id = Column(String(255), ForeignKey("players.player_id"), nullable=False)
+    parameters = Column(JSON, nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)

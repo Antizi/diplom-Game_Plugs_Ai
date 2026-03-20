@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Импортируем роутеры (убедись, что они существуют по указанным путям)
-from gamedb_backend.routes import sessions, test
+from gamedb_backend.routes import sessions, test, game
+
 
 # Создаём экземпляр приложения FastAPI
 app = FastAPI(
@@ -32,6 +33,7 @@ app.add_middleware(
 # Подключаем роутеры с префиксами
 app.include_router(sessions.router)  # все эндпоинты /sessions
 app.include_router(test.router, prefix="/api")  # тестовый эндпоинт /api/test
+app.include_router(game.router)
 
 
 # Корневой эндпоинт для проверки
