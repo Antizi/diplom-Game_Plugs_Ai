@@ -1,13 +1,11 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:16   # всегда последняя стабильная
+    image: postgres:16
     container_name: postgres-gamedb
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: your_password
+      POSTGRES_PASSWORD: 123
       POSTGRES_DB: gamedb
     ports:
       - "5432:5432"
@@ -27,15 +25,13 @@ services:
       - "8000:8000"
     environment:
       DB_USER: postgres
-      DB_PASSWORD: your_password
-      DB_HOST: postgres          # имя сервиса, по которому контейнеры видят друг друга
+      DB_PASSWORD: 123
+      DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: gamedb
     depends_on:
       postgres:
         condition: service_healthy
-    # volumes:                   # если нужно пробросить код для разработки (не обязательно)
-    #   - ./gamedb_backend:/app/gamedb_backend
 
 volumes:
   pgdata:
