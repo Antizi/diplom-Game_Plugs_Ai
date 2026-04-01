@@ -12,5 +12,7 @@
 
 &#x20;   docker ps
 
-5\. Откройте в браузере: http://localhost:8000/docs – должна открыться Swagger-документация.
+5\. Get-Content gamedb_backup.sql | docker exec -i postgres-gamedb psql -U postgres -d gamedb – восстановить данные.
+
+6\. Откройте в браузере: http://localhost:8000/docs – должна открыться Swagger-документация.
 
