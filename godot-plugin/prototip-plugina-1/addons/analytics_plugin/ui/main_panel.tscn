@@ -1,0 +1,141 @@
+[gd_scene format=3 uid="uid://dpxpjwipylwka"]
+
+[ext_resource type="Script" uid="uid://dxgm0yoegfr3b" path="res://addons/analytics_plugin/ui/main_panel.gd" id="1_jr8lf"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_6kiuf"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_jr8lf"]
+
+[node name="Panel" type="Panel" unique_id=973607305]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_jr8lf")
+
+[node name="MainMargin" type="MarginContainer" parent="." unique_id=1387802324]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="MainVBox" type="VBoxContainer" parent="MainMargin" unique_id=1907578082]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MainMargin/MainVBox" unique_id=171555682]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "ANALYTICS PLUGIN v1.0"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="MainMargin/MainVBox" unique_id=2052110256]
+layout_mode = 2
+
+[node name="ModeHBox" type="HBoxContainer" parent="MainMargin/MainVBox" unique_id=1040121720]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MainMargin/MainVBox/ModeHBox" unique_id=2139000846]
+layout_mode = 2
+text = "ModeHBox"
+
+[node name="RadioContainer" type="HBoxContainer" parent="MainMargin/MainVBox/ModeHBox" unique_id=894601205]
+layout_mode = 2
+
+[node name="CloudModeCheck" type="CheckBox" parent="MainMargin/MainVBox/ModeHBox/RadioContainer" unique_id=1529808097]
+layout_mode = 2
+button_group = SubResource("ButtonGroup_6kiuf")
+text = "Облачный (требуется сервер)"
+
+[node name="LocalModeCheck" type="CheckBox" parent="MainMargin/MainVBox/ModeHBox/RadioContainer" unique_id=253900753]
+layout_mode = 2
+button_group = SubResource("ButtonGroup_jr8lf")
+text = "Локальный (автономный)"
+
+[node name="SettingsButtonsHBox" type="HBoxContainer" parent="MainMargin/MainVBox" unique_id=2055005180]
+layout_mode = 2
+
+[node name="CloudSettingsBtn" type="Button" parent="MainMargin/MainVBox/SettingsButtonsHBox" unique_id=1335477558]
+layout_mode = 2
+text = "⚙️ Настроить облачный режим"
+
+[node name="LocalSettingsBtn" type="Button" parent="MainMargin/MainVBox/SettingsButtonsHBox" unique_id=1998956149]
+layout_mode = 2
+text = "⚙️ Настроить локальный режим
+
+"
+
+[node name="HSeparator3" type="HSeparator" parent="MainMargin/MainVBox" unique_id=284251953]
+layout_mode = 2
+
+[node name="EventsTitleLabel" type="Label" parent="MainMargin/MainVBox" unique_id=1628520928]
+layout_mode = 2
+text = "КЛЮЧЕВЫЕ ТОЧКИ (EVENTS):"
+
+[node name="EventsList" type="ItemList" parent="MainMargin/MainVBox" unique_id=2035369796]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="EventButtonsHBox" type="HBoxContainer" parent="MainMargin/MainVBox" unique_id=1587927450]
+layout_mode = 2
+
+[node name="AddEventBtn" type="Button" parent="MainMargin/MainVBox/EventButtonsHBox" unique_id=1447683478]
+layout_mode = 2
+text = "➕ Добавить событие"
+
+[node name="EditEventBtn" type="Button" parent="MainMargin/MainVBox/EventButtonsHBox" unique_id=1784261672]
+layout_mode = 2
+text = "✎ Редактировать"
+
+[node name="DeleteEventBtn" type="Button" parent="MainMargin/MainVBox/EventButtonsHBox" unique_id=26708704]
+layout_mode = 2
+text = "🗑️ Удалить"
+
+[node name="HSeparator2" type="HSeparator" parent="MainMargin/MainVBox" unique_id=1628134197]
+layout_mode = 2
+
+[node name="SessionTitleLabel" type="Label" parent="MainMargin/MainVBox" unique_id=248343682]
+layout_mode = 2
+text = "ТЕКУЩАЯ СЕССИЯ:"
+
+[node name="StatsGrid" type="GridContainer" parent="MainMargin/MainVBox" unique_id=1099294066]
+layout_mode = 2
+columns = 2
+
+[node name="SessionIdLabel" type="Label" parent="MainMargin/MainVBox/StatsGrid" unique_id=676252250]
+layout_mode = 2
+text = "ID сессии:"
+
+[node name="SessionIdValue" type="Label" parent="MainMargin/MainVBox/StatsGrid" unique_id=482080276]
+layout_mode = 2
+text = "sess_...
+"
+
+[node name="BufferLabel" type="Label" parent="MainMargin/MainVBox/StatsGrid" unique_id=1188180632]
+layout_mode = 2
+text = "Событий в буфере:"
+
+[node name="BufferCountValue" type="Label" parent="MainMargin/MainVBox/StatsGrid" unique_id=570888378]
+layout_mode = 2
+text = "0"
+
+[node name="HSeparator4" type="HSeparator" parent="MainMargin/MainVBox" unique_id=321193855]
+layout_mode = 2
+
+[node name="ActionButtonsHBox" type="HBoxContainer" parent="MainMargin/MainVBox" unique_id=643043780]
+layout_mode = 2
+
+[node name="SendNowBtn" type="Button" parent="MainMargin/MainVBox/ActionButtonsHBox" unique_id=1034210542]
+layout_mode = 2
+text = "📤 Отправить сейчас"
+
+[node name="ViewLogsBtn" type="Button" parent="MainMargin/MainVBox/ActionButtonsHBox" unique_id=2049064344]
+layout_mode = 2
+text = "📊 Просмотр логов"
+
+[node name="ResetStatsBtn" type="Button" parent="MainMargin/MainVBox/ActionButtonsHBox" unique_id=1503682116]
+layout_mode = 2
+text = "🔄 Сбросить статистику"
