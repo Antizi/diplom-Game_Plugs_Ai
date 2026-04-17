@@ -64,9 +64,7 @@ text = "⚙️ Настроить облачный режим"
 
 [node name="LocalSettingsBtn" type="Button" parent="MainMargin/MainVBox/SettingsButtonsHBox" unique_id=1998956149]
 layout_mode = 2
-text = "⚙️ Настроить локальный режим
-
-"
+text = "⚙️ Настроить локальный режим"
 
 [node name="HSeparator3" type="HSeparator" parent="MainMargin/MainVBox" unique_id=284251953]
 layout_mode = 2
@@ -94,6 +92,75 @@ text = "✎ Редактировать"
 layout_mode = 2
 text = "🗑️ Удалить"
 
+[node name="CriticalPointTitleLabel" type="Label" parent="MainMargin/MainVBox" unique_id=121212121]
+layout_mode = 2
+text = "КРИТИЧЕСКИЕ ТОЧКИ ДЛЯ ML:"
+
+[node name="CriticalPointInputHBox" type="HBoxContainer" parent="MainMargin/MainVBox" unique_id=232323232]
+layout_mode = 2
+
+[node name="CriticalPointNameInput" type="LineEdit" parent="MainMargin/MainVBox/CriticalPointInputHBox" unique_id=343434343]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Название точки (например: puzzle_time)"
+
+[node name="CriticalPointWeightSpin" type="SpinBox" parent="MainMargin/MainVBox/CriticalPointInputHBox" unique_id=454545454]
+layout_mode = 2
+custom_minimum_size = Vector2(90, 0)
+min_value = 0.1
+max_value = 10.0
+step = 0.1
+value = 1.0
+
+[node name="AddCriticalPointBtn" type="Button" parent="MainMargin/MainVBox/CriticalPointInputHBox" unique_id=565656565]
+layout_mode = 2
+text = "➕ Точка"
+
+[node name="CriticalPointsList" type="ItemList" parent="MainMargin/MainVBox" unique_id=676767676]
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+
+[node name="CriticalPointButtonsHBox" type="HBoxContainer" parent="MainMargin/MainVBox" unique_id=787878787]
+layout_mode = 2
+
+[node name="DeleteCriticalPointBtn" type="Button" parent="MainMargin/MainVBox/CriticalPointButtonsHBox" unique_id=898989898]
+layout_mode = 2
+text = "🗑️ Удалить точку"
+
+[node name="ArchetypeTitleLabel" type="Label" parent="MainMargin/MainVBox" unique_id=919191919]
+layout_mode = 2
+text = "АРХЕТИПЫ ИГРОКОВ:"
+
+[node name="ArchetypeInputHBox" type="HBoxContainer" parent="MainMargin/MainVBox" unique_id=929292929]
+layout_mode = 2
+
+[node name="ArchetypeNameInput" type="LineEdit" parent="MainMargin/MainVBox/ArchetypeInputHBox" unique_id=939393939]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Название архетипа (например: explorer)"
+
+[node name="AddArchetypeBtn" type="Button" parent="MainMargin/MainVBox/ArchetypeInputHBox" unique_id=949494949]
+layout_mode = 2
+text = "➕ Архетип"
+
+[node name="ArchetypesList" type="ItemList" parent="MainMargin/MainVBox" unique_id=959595959]
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+
+[node name="ArchetypeButtonsHBox" type="HBoxContainer" parent="MainMargin/MainVBox" unique_id=969696969]
+layout_mode = 2
+
+[node name="DeleteArchetypeBtn" type="Button" parent="MainMargin/MainVBox/ArchetypeButtonsHBox" unique_id=979797979]
+layout_mode = 2
+text = "🗑️ Удалить архетип"
+
+[node name="ProfileButtonsHBox" type="HBoxContainer" parent="MainMargin/MainVBox" unique_id=989898989]
+layout_mode = 2
+
+[node name="SaveMlProfileBtn" type="Button" parent="MainMargin/MainVBox/ProfileButtonsHBox" unique_id=999999999]
+layout_mode = 2
+text = "💾 Сохранить ML профиль"
+
 [node name="HSeparator2" type="HSeparator" parent="MainMargin/MainVBox" unique_id=1628134197]
 layout_mode = 2
 
@@ -111,8 +178,7 @@ text = "ID сессии:"
 
 [node name="SessionIdValue" type="Label" parent="MainMargin/MainVBox/StatsGrid" unique_id=482080276]
 layout_mode = 2
-text = "sess_...
-"
+text = "sess_..."
 
 [node name="BufferLabel" type="Label" parent="MainMargin/MainVBox/StatsGrid" unique_id=1188180632]
 layout_mode = 2

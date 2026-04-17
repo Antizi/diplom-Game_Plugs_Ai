@@ -35,7 +35,7 @@ func _init(custom_config = {}):
 	# Подключаем сигналы
 	http_request.request_completed.connect(_on_request_completed)
 
-func send_events(events_array):
+func send_events(events_array, metadata := {}):
 	"""Отправка массива событий на сервер"""
 	if events_array.is_empty():
 		return false
@@ -55,6 +55,7 @@ func send_events(events_array):
 	# Формируем данные для отправки
 	var data_to_send = {
 		"events": events_array,
+		"metadata": metadata,
 		"api_key": config.api_key,
 		"timestamp": Time.get_unix_time_from_system()
 	}

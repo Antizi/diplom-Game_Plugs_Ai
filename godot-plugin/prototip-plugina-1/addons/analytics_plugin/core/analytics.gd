@@ -9,7 +9,10 @@ var config = {
 	"cloud_url": "",
 	"api_key": "",
 	"local_db_path": "user://analytics.db",
-	"ml_model_path": ""
+	"ml_model_path": "",
+	"game_id": "default_game",
+	"critical_points": [],
+	"archetypes": []
 }
 
 # Буфер событий
@@ -139,7 +142,10 @@ func _save_default_config(path):
 		"cloud_url": "http://localhost:8000/analytics",
 		"api_key": "",
 		"local_db_path": "user://analytics.db",
-		"ml_model_path": ""
+		"ml_model_path": "",
+		"game_id": "default_game",
+		"critical_points": [],
+		"archetypes": []
 	}
 	
 	var file = FileAccess.open(path, FileAccess.WRITE)
@@ -212,7 +218,12 @@ func sync_now():
 	
 	# Отправляем в зависимости от режима
 	if config.mode == "cloud" and cloud_sender:
-		cloud_sender.send_events(events_to_send)
+		var metadata = {
+			"game_id": config.get("game_id", "default_game"),
+			"critical_points": config.get("critical_points", []),
+			"archetypes": config.get("archetypes", [])
+		}
+		cloud_sender.send_events(events_to_send, metadata)
 	elif config.mode == "local":
 		# TODO: сохранить в SQLite
 		print("📊 Локальный режим: сохранение в БД (пока не реализовано)")

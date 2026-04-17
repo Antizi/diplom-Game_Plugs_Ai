@@ -1,7 +1,8 @@
 @tool
 extends Panel
 
-# Ссылки на элементы интерфейса
+const PROFILE_PATH := "user://ml_profile.json"
+
 @onready var cloud_mode_check = $MainMargin/MainVBox/ModeHBox/RadioContainer/CloudModeCheck
 @onready var local_mode_check = $MainMargin/MainVBox/ModeHBox/RadioContainer/LocalModeCheck
 @onready var cloud_settings_btn = $MainMargin/MainVBox/SettingsButtonsHBox/CloudSettingsBtn
@@ -10,21 +11,34 @@ extends Panel
 @onready var add_event_btn = $MainMargin/MainVBox/EventButtonsHBox/AddEventBtn
 @onready var edit_event_btn = $MainMargin/MainVBox/EventButtonsHBox/EditEventBtn
 @onready var delete_event_btn = $MainMargin/MainVBox/EventButtonsHBox/DeleteEventBtn
+@onready var critical_point_name_input = $MainMargin/MainVBox/CriticalPointInputHBox/CriticalPointNameInput
+@onready var critical_point_weight_spin = $MainMargin/MainVBox/CriticalPointInputHBox/CriticalPointWeightSpin
+@onready var add_critical_point_btn = $MainMargin/MainVBox/CriticalPointInputHBox/AddCriticalPointBtn
+@onready var critical_points_list = $MainMargin/MainVBox/CriticalPointsList
+@onready var delete_critical_point_btn = $MainMargin/MainVBox/CriticalPointButtonsHBox/DeleteCriticalPointBtn
+@onready var archetype_name_input = $MainMargin/MainVBox/ArchetypeInputHBox/ArchetypeNameInput
+@onready var add_archetype_btn = $MainMargin/MainVBox/ArchetypeInputHBox/AddArchetypeBtn
+@onready var archetypes_list = $MainMargin/MainVBox/ArchetypesList
+@onready var delete_archetype_btn = $MainMargin/MainVBox/ArchetypeButtonsHBox/DeleteArchetypeBtn
+@onready var save_ml_profile_btn = $MainMargin/MainVBox/ProfileButtonsHBox/SaveMlProfileBtn
 @onready var session_id_value = $MainMargin/MainVBox/StatsGrid/SessionIdValue
 @onready var buffer_count_value = $MainMargin/MainVBox/StatsGrid/BufferCountValue
 @onready var send_now_btn = $MainMargin/MainVBox/ActionButtonsHBox/SendNowBtn
 @onready var view_logs_btn = $MainMargin/MainVBox/ActionButtonsHBox/ViewLogsBtn
 @onready var reset_stats_btn = $MainMargin/MainVBox/ActionButtonsHBox/ResetStatsBtn
 
-# Список событий (для примера)
 var events = ["dialog_choice", "item_pickup", "location_change", "combat_start"]
+var critical_points: Array[Dictionary] = []
+var archetypes: Array[String] = []
 var cloud_settings_window = null
+
 func _ready():
-	# Заполняем список событий
 	for event in events:
 		events_list.add_item(event)
-	
-	# Подключаем сигналы
+	_load_ml_profile()
+	_redraw_critical_points()
+	_redraw_archetypes()
+
 	cloud_mode_check.toggled.connect(_on_cloud_mode_toggled)
 	local_mode_check.toggled.connect(_on_local_mode_toggled)
 	cloud_settings_btn.pressed.connect(_on_cloud_settings_pressed)
@@ -32,11 +46,15 @@ func _ready():
 	add_event_btn.pressed.connect(_on_add_event_pressed)
 	edit_event_btn.pressed.connect(_on_edit_event_pressed)
 	delete_event_btn.pressed.connect(_on_delete_event_pressed)
+	add_critical_point_btn.pressed.connect(_on_add_critical_point_pressed)
+	delete_critical_point_btn.pressed.connect(_on_delete_critical_point_pressed)
+	add_archetype_btn.pressed.connect(_on_add_archetype_pressed)
+	delete_archetype_btn.pressed.connect(_on_delete_archetype_pressed)
+	save_ml_profile_btn.pressed.connect(_on_save_ml_profile_pressed)
 	send_now_btn.pressed.connect(_on_send_now_pressed)
 	view_logs_btn.pressed.connect(_on_view_logs_pressed)
 	reset_stats_btn.pressed.connect(_on_reset_stats_pressed)
-	
-	# Обновляем статистику
+
 	update_stats()
 
 func _on_cloud_mode_toggled(enabled):
@@ -50,72 +68,146 @@ func _on_local_mode_toggled(enabled):
 		print("Переключено на локальный режим")
 
 func _on_cloud_settings_pressed():
-	print("Открыть настройки облачного режима")
-	
-	# Если окно ещё не создано - создаём
 	if cloud_settings_window == null:
 		cloud_settings_window = preload("res://addons/analytics_plugin/ui/cloud_settings.tscn").instantiate()
 		add_child(cloud_settings_window)
 		cloud_settings_window.settings_saved.connect(_on_cloud_settings_saved)
-	
-	# Обновляем настройки и показываем окно
 	cloud_settings_window.load_settings()
 	cloud_settings_window.popup_centered()
 
 func _on_cloud_settings_saved(settings):
-	print("Настройки облачного режима сохранены:", settings)
-	
-	# Применяем настройки к Analytics
 	if Engine.has_singleton("Analytics"):
 		var analytics = Engine.get_singleton("Analytics")
-		# Обновляем конфиг
 		for key in settings:
 			analytics.config[key] = settings[key]
-		
-		# Пересоздаём cloud_sender с новыми настройками
 		if analytics.cloud_sender:
 			analytics.cloud_sender.queue_free()
+			analytics.cloud_sender = null
 		analytics._init_cloud_sender()
-		
-		# Сохраняем конфиг в файл
-		analytics._save_config(analytics.config_path)
+		analytics._save_config()
 
 func _on_local_settings_pressed():
 	print("Открыть настройки локального режима")
-	# TODO: открыть окно настроек локального режима
 
 func _on_add_event_pressed():
-	# TODO: открыть диалог добавления события
-	print("Добавить событие")
+	var event_name = "custom_event_" + str(events_list.item_count + 1)
+	events_list.add_item(event_name)
 
 func _on_edit_event_pressed():
 	var selected = events_list.get_selected_items()
 	if selected.size() > 0:
 		var event_name = events_list.get_item_text(selected[0])
-		print("Редактировать событие: ", event_name)
-		# TODO: открыть диалог редактирования
+		events_list.set_item_text(selected[0], event_name + "_edited")
 
 func _on_delete_event_pressed():
 	var selected = events_list.get_selected_items()
 	if selected.size() > 0:
-		var event_name = events_list.get_item_text(selected[0])
 		events_list.remove_item(selected[0])
-		print("Удалено событие: ", event_name)
+
+func _on_add_critical_point_pressed():
+	var metric_name = critical_point_name_input.text.strip_edges()
+	if metric_name.is_empty():
+		return
+	var metric = {
+		"name": metric_name,
+		"weight": float(critical_point_weight_spin.value)
+	}
+	critical_points.append(metric)
+	critical_point_name_input.text = ""
+	_redraw_critical_points()
+
+func _on_delete_critical_point_pressed():
+	var selected = critical_points_list.get_selected_items()
+	if selected.size() == 0:
+		return
+	var index = selected[0]
+	if index >= 0 and index < critical_points.size():
+		critical_points.remove_at(index)
+		_redraw_critical_points()
+
+func _on_add_archetype_pressed():
+	var name = archetype_name_input.text.strip_edges().to_lower()
+	if name.is_empty():
+		return
+	if archetypes.has(name):
+		return
+	archetypes.append(name)
+	archetype_name_input.text = ""
+	_redraw_archetypes()
+
+func _on_delete_archetype_pressed():
+	var selected = archetypes_list.get_selected_items()
+	if selected.size() == 0:
+		return
+	var index = selected[0]
+	if index >= 0 and index < archetypes.size():
+		archetypes.remove_at(index)
+		_redraw_archetypes()
+
+func _on_save_ml_profile_pressed():
+	_save_ml_profile()
+	_apply_ml_profile_to_analytics()
+	print("ML профиль сохранен")
+
+func _redraw_critical_points():
+	critical_points_list.clear()
+	for item in critical_points:
+		critical_points_list.add_item("%s (w=%.2f)" % [item.get("name", "unknown"), float(item.get("weight", 1.0))])
+
+func _redraw_archetypes():
+	archetypes_list.clear()
+	for name in archetypes:
+		archetypes_list.add_item(name)
+
+func _serialize_ml_profile() -> Dictionary:
+	return {
+		"critical_points": critical_points,
+		"archetypes": archetypes
+	}
+
+func _save_ml_profile():
+	var file = FileAccess.open(PROFILE_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(_serialize_ml_profile(), "\t"))
+		file.close()
+
+func _load_ml_profile():
+	if not FileAccess.file_exists(PROFILE_PATH):
+		return
+	var file = FileAccess.open(PROFILE_PATH, FileAccess.READ)
+	if not file:
+		return
+	var raw = file.get_as_text()
+	file.close()
+	var json = JSON.new()
+	if json.parse(raw) != OK:
+		return
+	var data: Dictionary = json.data
+	critical_points = data.get("critical_points", [])
+	archetypes = data.get("archetypes", [])
+
+func _apply_ml_profile_to_analytics():
+	if not Engine.has_singleton("Analytics"):
+		return
+	var analytics = Engine.get_singleton("Analytics")
+	analytics.config["critical_points"] = critical_points.duplicate(true)
+	analytics.config["archetypes"] = archetypes.duplicate()
+	analytics._save_config()
 
 func _on_send_now_pressed():
-	print("Ручная отправка данных")
-	# TODO: вызвать Analytics.sync_now()
+	if Engine.has_singleton("Analytics"):
+		Analytics.sync_now()
 
 func _on_view_logs_pressed():
 	print("Просмотр логов")
-	# TODO: открыть окно с логами
 
 func _on_reset_stats_pressed():
-	print("Сброс статистики")
-	# TODO: сбросить статистику
+	if Engine.has_singleton("Analytics"):
+		var analytics = Engine.get_singleton("Analytics")
+		analytics.event_buffer.clear()
+	update_stats()
 
 func update_stats():
-	# Получаем данные из Analytics, если доступно
 	if Engine.has_singleton("Analytics"):
 		var stats = Analytics.get_stats()
 		session_id_value.text = stats.get("session_id", "sess_unknown")
@@ -124,7 +216,6 @@ func update_stats():
 		session_id_value.text = "sess_demo"
 		buffer_count_value.text = "0"
 
-func _process(delta):
-	# Обновляем статистику в реальном времени (если нужно)
+func _process(_delta):
 	if Engine.has_singleton("Analytics"):
 		update_stats()
