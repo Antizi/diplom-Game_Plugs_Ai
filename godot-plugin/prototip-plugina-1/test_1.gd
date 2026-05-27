@@ -7,8 +7,10 @@ func _ready():
 	if Analytics:
 		print("✅ Analytics найден!")
 		
-		# Инициализируем
+		# Настройка плагина (один раз на приложение)
 		Analytics.initialize()
+		# Старт новой игры — TODO: перенести в GameManager / «Новая игра»
+		Analytics.start_new_game("test_1.0")
 		
 		# Отправляем тестовое событие
 		Analytics.track("test_event", {"message": "hello"})

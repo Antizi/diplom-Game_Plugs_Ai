@@ -52,16 +52,27 @@ func send_events(events_array, metadata := {}):
 		pending_queue.append_array(events_array)
 		return true
 	
-	# Формируем данные для отправки
-	var data_to_send = {
-		"events": events_array,
-		"metadata": metadata,
-		"api_key": config.api_key,
-		"timestamp": Time.get_unix_time_from_system()
+	# Backend ожидает TelemetryIngestIn на POST /telemetry/ingest:
+	# { events: [ {session_id, player_id, event_name, timestamp, game_time, parameters, state} ],
+	#   metadata: { critical_points?, archetypes?, model_mode?, feature_schema_version? } }
+	var ingest_events: Array = []
+	for ev in events_array:
+		ingest_events.append({
+			"session_id": ev.get("session_id", ""),
+			"player_id": ev.get("player_id", ""),
+			"event_name": ev.get("event_name", "unknown_event"),
+			"timestamp": ev.get("timestamp", 0),
+			"game_time": ev.get("game_time", 0.0),
+			"parameters": ev.get("parameters", {}),
+			"state": ev.get("state", {})
+		})
+
+	var ingest_payload = {
+		"events": ingest_events,
+		"metadata": metadata
 	}
-	
-	# Конвертируем в JSON
-	var json_string = JSON.new().stringify(data_to_send)
+
+	var json_string = JSON.new().stringify(ingest_payload)
 	
 	# Создаем заголовки
 	var headers = ["Content-Type: application/json"]
@@ -149,8 +160,19 @@ func check_server_availability():
 	if config.api_key:
 		headers.append("X-API-Key: " + config.api_key)
 	
-	# Отправляем GET запрос на проверку
-	ping_request.request(config.cloud_url, headers, HTTPClient.METHOD_GET)
+	# /telemetry/ingest — POST endpoint, поэтому проверяем базовый /health
+	var health_url = _get_health_url()
+	ping_request.request(health_url, headers, HTTPClient.METHOD_GET)
+
+func _get_health_url() -> String:
+	var url: String = str(config.cloud_url)
+	var scheme_idx := url.find("://")
+	if scheme_idx == -1:
+		return "/health"
+	var host_start := scheme_idx + 3
+	var path_idx := url.find("/", host_start)
+	var origin := url if path_idx == -1 else url.substr(0, path_idx)
+	return origin + "/health"
 
 func _on_ping_completed(result, response_code, headers, body, ping_request):
 	ping_request.queue_free()

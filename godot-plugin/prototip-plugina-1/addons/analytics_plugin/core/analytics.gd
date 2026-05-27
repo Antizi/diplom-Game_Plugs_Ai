@@ -28,53 +28,101 @@ var current_state = {}
 # Таймер
 var send_timer = null
 
-# Флаг инициализации
-var initialized = false
-# Облачный отправитель
+# Флаги жизненного цикла
+var initialized := false
+var game_session_active := false
+var server_session_ready := false
+var session_http: HTTPRequest = null
+var _pending_game_version := ""
 
 # Константы
 const CONFIG_PATH = "user://analytics_config.json"
 const PLAYER_ID_PATH = "user://player_id.txt"
 var cloud_sender = null
-func _init():
-	# Генерируем session_id при создании
-	_generate_session_id()
 
-func initialize(config_path = "res://analytics_config.json"):
-	print("📊 Analytics: инициализация...")
-	
-	# Загружаем конфиг
+## Однократная настройка плагина (конфиг, player_id, CloudSender, таймер).
+## Не создаёт игровую сессию — для этого используйте start_new_game().
+func initialize(config_path = CONFIG_PATH) -> bool:
+	if initialized:
+		return true
+
+	print("📊 Analytics: инициализация плагина...")
 	_load_config(config_path)
-	
-	# Загружаем или создаем player_id
 	_load_or_create_player_id()
-	
-	# Создаем таймер для автоотправки
 	_setup_auto_send()
-	
-	# СОЗДАЕМ CLOUD SENDER (НОВОЕ)
 	_init_cloud_sender()
-	
 	initialized = true
-	print("✅ Analytics инициализирован! Режим: ", config.mode)
+	print("✅ Analytics готов. Вызовите start_new_game() при старте новой игры. Режим:", config.mode)
 	return true
+
+
+## Старт новой игровой сессии: новый session_id, сброс буфера и состояния.
+## TODO(интеграция): вызывать при начале новой игры, не из _ready() тестовой сцены.
+## Перенести в GameManager / кнопку «Новая игра» / загрузку run или первого уровня.
+func start_new_game(game_version: String = "") -> bool:
+	if not initialized:
+		print("❌ Сначала вызовите Analytics.initialize()")
+		return false
+
+	print("📊 Старт новой игровой сессии...")
+	_pending_game_version = game_version
+	event_buffer.clear()
+	current_state.clear()
+	session_id = ""
+	server_session_ready = false
+	game_session_active = true
+
+	if config.mode == "cloud" and not str(config.get("cloud_url", "")).strip_edges().is_empty():
+		_start_server_session()
+	else:
+		_generate_local_session_id()
+
+	return true
+
+
+## Завершение текущей игровой сессии.
+## TODO(интеграция): вызывать при выходе в меню / game over — PATCH /game/session/{id}/end
+func end_game() -> void:
+	if not game_session_active:
+		return
+	game_session_active = false
+	server_session_ready = false
+	session_id = ""
+	print("📊 Игровая сессия завершена")
+func apply_config(patch: Dictionary, persist: bool = true) -> void:
+	for key in patch:
+		if key in config:
+			config[key] = patch[key]
+	if persist:
+		_save_config()
+	_refresh_cloud_sender()
+
+func _refresh_cloud_sender() -> void:
+	if cloud_sender:
+		cloud_sender.queue_free()
+		cloud_sender = null
+	var url := str(config.get("cloud_url", "")).strip_edges()
+	if url.is_empty():
+		print("📊 cloud_url не задан — укажите URL в настройках облачного режима")
+		return
+	_init_cloud_sender()
+
 func _init_cloud_sender():
-	# Создаем отправитель только если он ещё не создан
-	if cloud_sender == null:
-		cloud_sender = CloudSender.new({
-			"cloud_url": config.cloud_url,
-			"api_key": config.api_key,
-			"timeout": 5,
-			"retry_count": 3
-		})
-		add_child(cloud_sender)
-		
-		# Подключаем сигналы
-		cloud_sender.send_successful.connect(_on_cloud_send_successful)
-		cloud_sender.send_failed.connect(_on_cloud_send_failed)
-		cloud_sender.server_available_changed.connect(_on_server_available_changed)
-		
-		print("📡 CloudSender создан, URL:", config.cloud_url)
+	if str(config.get("cloud_url", "")).strip_edges().is_empty():
+		return
+	if cloud_sender != null:
+		return
+	cloud_sender = CloudSender.new({
+		"cloud_url": config.cloud_url,
+		"api_key": config.api_key,
+		"timeout": 5,
+		"retry_count": 3
+	})
+	add_child(cloud_sender)
+	cloud_sender.send_successful.connect(_on_cloud_send_successful)
+	cloud_sender.send_failed.connect(_on_cloud_send_failed)
+	cloud_sender.server_available_changed.connect(_on_server_available_changed)
+	print("📡 CloudSender создан, URL:", config.cloud_url)
 
 func _on_cloud_send_successful(count):
 	print("✅ Облачная отправка успешна")
@@ -84,13 +132,70 @@ func _on_cloud_send_failed(error_message):
 
 func _on_server_available_changed(is_available):
 	print("📡 Сервер ", "доступен" if is_available else "недоступен")
-func _generate_session_id():
-	# Генерируем уникальный ID сессии
-	# Используем timestamp + случайное число
+func _generate_local_session_id():
 	var timestamp = str(Time.get_unix_time_from_system())
 	var random = str(randi() % 10000)
 	session_id = "sess_" + timestamp + "_" + random
-	print("📊 Новая сессия: ", session_id)
+	server_session_ready = false
+	print("📊 Локальная сессия: ", session_id)
+
+func _get_api_base_url() -> String:
+	var url := str(config.get("cloud_url", "")).strip_edges()
+	var marker := "/telemetry"
+	var idx := url.find(marker)
+	if idx > 0:
+		return url.substr(0, idx)
+	var last_slash := url.rfind("/")
+	if last_slash > 7:
+		return url.substr(0, last_slash)
+	return url
+
+func _is_uuid(value: String) -> bool:
+	if value.length() != 36:
+		return false
+	var regex := RegEx.new()
+	regex.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+	return regex.search(value) != null
+
+func _start_server_session() -> void:
+	server_session_ready = false
+	if session_http == null:
+		session_http = HTTPRequest.new()
+		add_child(session_http)
+		session_http.request_completed.connect(_on_session_start_completed)
+	var base_url := _get_api_base_url()
+	var start_url := base_url + "/game/session/start?player_id=" + player_id.uri_encode()
+	print("📊 Запрашиваем session_id у сервера...")
+	session_http.request(start_url, [], HTTPClient.METHOD_POST)
+
+func _on_session_start_completed(result, response_code, _headers, body):
+	if result != HTTPRequest.RESULT_SUCCESS or response_code < 200 or response_code >= 300:
+		print("❌ Не удалось создать серверную сессию, код:", response_code)
+		server_session_ready = false
+		return
+	var body_text := body.get_string_from_utf8()
+	var json := JSON.new()
+	if json.parse(body_text) != OK:
+		print("❌ Не удалось разобрать ответ /game/session/start")
+		server_session_ready = false
+		return
+	var data: Dictionary = json.data
+	if not data.has("session_id"):
+		print("❌ В ответе нет session_id")
+		server_session_ready = false
+		return
+	session_id = str(data["session_id"])
+	server_session_ready = true
+	print("📊 Серверная сессия: ", session_id)
+	if not _pending_game_version.is_empty():
+		print("📊 Версия игры:", _pending_game_version)
+	_update_buffered_session_ids()
+	if len(event_buffer) > 0:
+		sync_now()
+
+func _update_buffered_session_ids() -> void:
+	for event in event_buffer:
+		event["session_id"] = session_id
 
 func _load_or_create_player_id():
 	# Пробуем загрузить существующий player_id
@@ -130,29 +235,10 @@ func _load_config(path):
 		else:
 			print("❌ Ошибка парсинга конфига")
 	else:
-		print("📊 Конфиг не найден, используются настройки по умолчанию")
-		# Создаем пример конфига
-		_save_default_config(path)
+		print("📊 Конфиг не найден: ", path)
+		print("📊 Используйте настройки плагина и сохраните URL сервера вручную")
 
-func _save_default_config(path):
-	var default_config = {
-		"mode": "cloud",
-		"buffer_size": 100,
-		"auto_send_interval": 30,
-		"cloud_url": "http://localhost:8000/analytics",
-		"api_key": "",
-		"local_db_path": "user://analytics.db",
-		"ml_model_path": "",
-		"game_id": "default_game",
-		"critical_points": [],
-		"archetypes": []
-	}
-	
-	var file = FileAccess.open(path, FileAccess.WRITE)
-	file.store_string(JSON.new().stringify(default_config, "\t"))
-	file.close()
-	print("📊 Создан конфиг по умолчанию: ", path)
-func _save_config(path = "res://analytics_config.json"):
+func _save_config(path = CONFIG_PATH):
 	var file = FileAccess.open(path, FileAccess.WRITE)
 	if file:
 		file.store_string(JSON.new().stringify(config, "\t"))
@@ -175,7 +261,10 @@ func _on_auto_send_timeout():
 
 func track(event_name: String, parameters: Dictionary = {}):
 	if not initialized:
-		print("❌ Analytics не инициализирован!")
+		print("❌ Analytics не инициализирован! Вызовите initialize()")
+		return false
+	if not game_session_active:
+		print("❌ Нет активной игровой сессии! Вызовите start_new_game()")
 		return false
 	
 	# Создаем полный объект события
@@ -216,6 +305,20 @@ func sync_now():
 	var events_to_send = event_buffer.duplicate()
 	event_buffer.clear()
 	
+	if config.mode == "cloud" and str(config.get("cloud_url", "")).strip_edges().is_empty():
+		print("❌ cloud_url пустой — события возвращены в буфер")
+		event_buffer = events_to_send + event_buffer
+		return false
+
+	if config.mode == "cloud" and not server_session_ready:
+		print("📊 session_id ещё не получен с сервера, отложим отправку")
+		event_buffer = events_to_send + event_buffer
+		_start_server_session()
+		return false
+
+	for event in events_to_send:
+		event["session_id"] = session_id
+
 	# Отправляем в зависимости от режима
 	if config.mode == "cloud" and cloud_sender:
 		var metadata = {
