@@ -5,7 +5,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: gamedb
     ports:
       - "5432:5432"
@@ -25,13 +25,21 @@ services:
       - "8000:8000"
     environment:
       DB_USER: postgres
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: gamedb
+      # Внешний ML-service команды (опционально): http://host.docker.internal:8001
+      ML_SERVICE_URL: ${ML_SERVICE_URL:-}
+      ML_PREDICT_ENABLED: ${ML_PREDICT_ENABLED:-false}
+      MODELS_DIR: /app/models
+      CORS_ORIGINS: "*"
+    volumes:
+      - models_data:/app/models
     depends_on:
       postgres:
         condition: service_healthy
 
 volumes:
   pgdata:
+  models_data:

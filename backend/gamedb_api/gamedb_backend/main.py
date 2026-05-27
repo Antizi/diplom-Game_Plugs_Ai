@@ -1,61 +1,84 @@
+from contextlib import asynccontextmanager
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-# Импортируем роутеры
-from gamedb_backend.routes import sessions, test, game
-from gamedb_backend.database import engine, SessionLocal
 from gamedb_backend import models
+from gamedb_backend.config import CORS_ORIGINS, MODELS_DIR
+from gamedb_backend.database import SessionLocal, engine
+from gamedb_backend.routes import game, games, sessions, telemetry
 
-# Создаём экземпляр приложения FastAPI
+
+def _run_migrations() -> None:
+    """Применяет SQL-миграции при каждом старте (все операции идемпотентны)."""
+    migrations_dir = Path(__file__).resolve().parents[1] / "migrations"
+    if not migrations_dir.is_dir():
+        return
+
+    for migration_path in sorted(migrations_dir.glob("*.sql")):
+        sql = migration_path.read_text(encoding="utf-8")
+        sql = "\n".join(
+            line for line in sql.splitlines() if not line.strip().startswith("--")
+        )
+        statements = [
+            statement.strip()
+            for statement in sql.split(";")
+            if statement.strip()
+        ]
+        with engine.begin() as conn:
+            for statement in statements:
+                conn.execute(text(statement))
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    models.Base.metadata.create_all(bind=engine)
+    _run_migrations()
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    yield
+
+
 app = FastAPI(
     title="Game Telemetry API",
     description="""
     **API для сбора игровой телеметрии и адаптивного геймдизайна**
 
-    Этот API позволяет:
-    * Регистрировать игровые сессии и события
-    * Получать текущие параметры адаптации для игрока
-    * Сохранять прогнозы ML-моделей
-
-    Все данные хранятся в PostgreSQL. Документация описывает доступные endpoints.
+    Единая точка входа для Godot-плагина:
+    * Сессии и события
+    * `/telemetry/ingest` — сохранение + ML + адаптация
+    * Профили игр и ONNX-модели для офлайн-режима
     """,
-    version="0.2.0",
+    version="0.3.0",
+    lifespan=lifespan,
+    swagger_ui_parameters={"defaultModelsExpandDepth": -1},
 )
 
-# Настройка CORS
+_allow_credentials = "*" not in CORS_ORIGINS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=CORS_ORIGINS if CORS_ORIGINS else ["*"],
+    allow_credentials=_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Подключаем роутеры
-app.include_router(sessions.router)      # /sessions
-app.include_router(test.router, prefix="/api")  # /api/test
-app.include_router(game.router)          # /game/...
+app.include_router(game.router)
+app.include_router(telemetry.router)
+app.include_router(games.router)
+app.include_router(sessions.router)
 
-# Корневой эндпоинт
-@app.get("/", tags=["root"], summary="Корневой эндпоинт")
-def root():
-    """Возвращает приветственное сообщение."""
-    return {"message": "Game Telemetry API is running"}
 
-# Эндпоинт для проверки здоровья (с проверкой БД)
-@app.get("/health", tags=["health"], summary="Проверка здоровья сервиса")
+@app.get("/health", tags=["health"])
 def health_check():
-    """Проверяет, что API работает и база данных доступна."""
+    db_status = "unavailable"
     try:
-        # Пытаемся выполнить простой запрос к БД
         db = SessionLocal()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db.close()
         db_status = "ok"
     except SQLAlchemyError:
-        db_status = "unavailable"
-    return {
-        "status": "ok",
-        "database": db_status
-    }
+        pass
+    return {"status": "ok", "database": db_status}
