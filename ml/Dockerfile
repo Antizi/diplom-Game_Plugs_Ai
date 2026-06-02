@@ -5,6 +5,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY predictor.py main.py ./
+COPY training/ training/
 COPY scripts/train_model.py scripts/train_model.py
 RUN python scripts/train_model.py
 

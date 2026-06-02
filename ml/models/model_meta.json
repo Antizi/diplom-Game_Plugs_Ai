@@ -1,5 +1,5 @@
 {
-  "model_version": "sklearn-rf-1.0",
+  "model_version": "sklearn-rf-synthetic-1.0",
   "feature_order": [
     "event_count_first_n",
     "time_sec",
@@ -37,5 +37,10 @@
       "enemy_density": 1.4,
       "loot_multiplier": 0.95
     }
+  },
+  "metrics": {
+    "train_accuracy": 1.0,
+    "test_accuracy": 1.0,
+    "samples": 1600
   }
 }
