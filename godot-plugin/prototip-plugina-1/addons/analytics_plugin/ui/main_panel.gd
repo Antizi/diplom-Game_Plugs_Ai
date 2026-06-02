@@ -28,8 +28,8 @@ const PROFILE_PATH := "user://ml_profile.json"
 @onready var reset_stats_btn = $MainMargin/MainVBox/ActionButtonsHBox/ResetStatsBtn
 
 var events = ["dialog_choice", "item_pickup", "location_change", "combat_start"]
-var critical_points: Array[Dictionary] = []
-var archetypes: Array[String] = []
+var critical_points: Array = []
+var archetypes: Array = []
 var cloud_settings_window = null
 
 func _ready():
@@ -76,15 +76,10 @@ func _on_cloud_settings_pressed():
 	cloud_settings_window.popup_centered()
 
 func _on_cloud_settings_saved(settings):
-	if Engine.has_singleton("Analytics"):
-		var analytics = Engine.get_singleton("Analytics")
-		for key in settings:
-			analytics.config[key] = settings[key]
-		if analytics.cloud_sender:
-			analytics.cloud_sender.queue_free()
-			analytics.cloud_sender = null
-		analytics._init_cloud_sender()
-		analytics._save_config()
+	var analytics = _get_analytics()
+	if analytics and analytics.has_method("apply_config"):
+		analytics.apply_config(settings, false)
+	print("📊 Облачные настройки применены")
 
 func _on_local_settings_pressed():
 	print("Открыть настройки локального режима")
@@ -126,12 +121,12 @@ func _on_delete_critical_point_pressed():
 		_redraw_critical_points()
 
 func _on_add_archetype_pressed():
-	var name = archetype_name_input.text.strip_edges().to_lower()
-	if name.is_empty():
+	var archetype_id = archetype_name_input.text.strip_edges().to_lower()
+	if archetype_id.is_empty():
 		return
-	if archetypes.has(name):
+	if archetypes.has(archetype_id):
 		return
-	archetypes.append(name)
+	archetypes.append(archetype_id)
 	archetype_name_input.text = ""
 	_redraw_archetypes()
 
@@ -156,8 +151,8 @@ func _redraw_critical_points():
 
 func _redraw_archetypes():
 	archetypes_list.clear()
-	for name in archetypes:
-		archetypes_list.add_item(name)
+	for archetype_id in archetypes:
+		archetypes_list.add_item(str(archetype_id))
 
 func _serialize_ml_profile() -> Dictionary:
 	return {
@@ -186,30 +181,38 @@ func _load_ml_profile():
 	critical_points = data.get("critical_points", [])
 	archetypes = data.get("archetypes", [])
 
+func _get_analytics() -> Node:
+	var loop := Engine.get_main_loop()
+	if loop is SceneTree:
+		return loop.root.get_node_or_null("Analytics")
+	return null
+
 func _apply_ml_profile_to_analytics():
-	if not Engine.has_singleton("Analytics"):
+	var analytics = _get_analytics()
+	if analytics == null:
 		return
-	var analytics = Engine.get_singleton("Analytics")
 	analytics.config["critical_points"] = critical_points.duplicate(true)
 	analytics.config["archetypes"] = archetypes.duplicate()
 	analytics._save_config()
 
 func _on_send_now_pressed():
-	if Engine.has_singleton("Analytics"):
-		Analytics.sync_now()
+	var analytics = _get_analytics()
+	if analytics:
+		analytics.sync_now()
 
 func _on_view_logs_pressed():
 	print("Просмотр логов")
 
 func _on_reset_stats_pressed():
-	if Engine.has_singleton("Analytics"):
-		var analytics = Engine.get_singleton("Analytics")
+	var analytics = _get_analytics()
+	if analytics:
 		analytics.event_buffer.clear()
 	update_stats()
 
 func update_stats():
-	if Engine.has_singleton("Analytics"):
-		var stats = Analytics.get_stats()
+	var analytics = _get_analytics()
+	if analytics:
+		var stats = analytics.get_stats()
 		session_id_value.text = stats.get("session_id", "sess_unknown")
 		buffer_count_value.text = str(stats.get("buffer_size", 0))
 	else:
@@ -217,5 +220,5 @@ func update_stats():
 		buffer_count_value.text = "0"
 
 func _process(_delta):
-	if Engine.has_singleton("Analytics"):
+	if _get_analytics():
 		update_stats()
