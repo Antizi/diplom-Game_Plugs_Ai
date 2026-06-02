@@ -1,23 +1,77 @@
-# Дипломный проект команды DiplicsTM.
+# Дипломный проект DiplicsTM — адаптивный геймплей на телеметрии
+
+Godot-аддон → Backend API (PostgreSQL) → ML-service (`/predict`).
 
 ## Команда
-- Изотов Антон (Team Leader / Data Scientist / ML Engineer)
-- Артамонов Федор (Game Developer / Godot Specialist)
-- Самигуллин Максим (Backend Developer / DB Architect)
 
-## Структура проекта
+- Изотов Антон — ML / Data Science
+- Артамонов Федор — Godot / плагин
+- Самигуллин Максим — Backend / БД
+
+## Структура репозитория
+
+```text
 diplom-Game_Plugs_Ai/
-├── godot-plugin/ # Плагин для Godot (GDScript / C#)
-│
-├── ml-service/ # ML-сервер на Python/FastAPI
-│
-├── backend/ # Сервер сбора статистики
-│
-├── docs/ # Документация
-│
-└── README.md # Этот файл
+├── docker-compose.yml
+├── .env.example
+├── backend/                    # FastAPI (пакет app/)
+├── ml/                           # POST /predict
+│   └── research/lstm/            # офлайн-прототип
+├── godot-plugin/
+│   ├── addons/analytics_plugin/  # ← отдавать разработчикам игр
+│   └── examples/                 # шаблоны GDScript (не аддон)
+└── docs/
+    ├── integration.md            # JSON-контракт API
+    └── ml-roadmap.md             # план по ML-service
+```
 
-## Как начать работу(in progress)
-1. Клонируйте репозиторий: `git clone https://github.com/...`
-2. Перейдите в нужную папку ......
-3. Следуйте инструкциям в README конкретной части
+## Быстрый старт (backend + ML)
+
+```powershell
+# из корня репозитория
+copy .env.example .env   # при необходимости
+docker compose up --build -d
+```
+
+| Сервис | URL |
+|--------|-----|
+| API + Swagger | http://localhost:8000/docs |
+| ML health | http://localhost:8001/health |
+| Postgres | localhost:5432 |
+
+## Godot (только аддон)
+
+1. Скопируйте `godot-plugin/addons/analytics_plugin/` → `ваш_проект/addons/analytics_plugin/`.
+2. Включите плагин в **Project Settings → Plugins**.
+3. URL ingest: `http://localhost:8000/telemetry/ingest`.
+
+Подробно: [godot-plugin/README.md](godot-plugin/README.md), [docs/integration.md](docs/integration.md).
+
+## Локальная разработка без Docker
+
+```powershell
+# Backend
+cd backend
+pip install -r requirements.txt
+$env:DB_HOST="localhost"; $env:DB_PASSWORD="postgres"
+python -m uvicorn app.main:app --reload --port 8000
+
+# ML
+cd ml
+pip install -r requirements.txt
+$env:ML_SERVICE_URL="http://localhost:8001"   # для ручной проверки predict
+python -m uvicorn main:app --port 8001
+```
+
+Тесты backend: `cd backend` → `pip install -r requirements-dev.txt` → `pytest tests/ -v`
+
+Seed: `python scripts/seed_data.py --sessions 100 --events-per-session 10`
+
+## Документация
+
+| Файл | Содержание |
+|------|------------|
+| [docs/integration.md](docs/integration.md) | HTTP + JSON для плагина |
+| [docs/ml-roadmap.md](docs/ml-roadmap.md) | Что осталось по ML |
+| [backend/README.md](backend/README.md) | API, env, тесты |
+| [ml/README.md](ml/README.md) | ML runtime |

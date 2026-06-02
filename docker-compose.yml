@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres-gamedb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: gamedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: fastapi-gamedb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: gamedb
+      ML_SERVICE_URL: http://ml:8001
+      ML_PREDICT_ENABLED: ${ML_PREDICT_ENABLED:-true}
+      MODELS_DIR: /app/models
+      CORS_ORIGINS: "*"
+    volumes:
+      - models_data:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ml:
+        condition: service_started
+
+  ml:
+    build: ./ml
+    container_name: ml-predict
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+
+volumes:
+  pgdata:
+  models_data:
