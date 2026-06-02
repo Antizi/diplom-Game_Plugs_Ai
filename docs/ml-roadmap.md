@@ -7,7 +7,7 @@
 | `ml/main.py` — `GET /health`, `POST /predict` | ✅ runtime |
 | Docker-сервис `ml` в корневом `docker-compose.yml` | ✅ |
 | Backend вызывает ML через `app/services/ml_client.py` | ✅ |
-| Эвристика по `features` + `archetypes` | ✅ (заглушка вместо нейросети) |
+| sklearn → ONNX (`classifier.onnx`) + fallback-эвристика | ✅ |
 | `ml/research/lstm/` — офлайн-прототип PyTorch | ✅ исследование, не в проде |
 
 Цепочка в cloud:
@@ -25,10 +25,12 @@ Godot → POST /telemetry/ingest (backend)
 
 ### 1. Модель вместо эвристики (приоритет)
 
-- [ ] Обучить модель на данных из Postgres (`backend/scripts/seed_data.py` + реальные сессии).
-- [ ] Экспорт в **ONNX** (из LSTM или более простого классификатора по табличным фичам).
-- [ ] Загрузка ONNX в `ml/main.py` (`onnxruntime`) — инференс в `/predict`.
-- [ ] Версионирование: поле `model_version` в ответе и в `game_models.onnx` на backend.
+- [x] Экспорт **ONNX** (RandomForest, `ml/scripts/train_model.py`).
+- [x] Загрузка ONNX в `ml/main.py` (`onnxruntime`).
+- [x] Версионирование: `model_version` в ответе (`sklearn-rf-1.0`).
+- [x] Обучить на данных из Postgres (`ml/scripts/train_from_postgres.py`, `scripts/train-from-db.ps1`).
+- [ ] LSTM → ONNX и замена sklearn.
+- [ ] Регистрация артефакта в `game_models.onnx` на backend.
 
 ### 2. Контракт `/predict` (расширение)
 

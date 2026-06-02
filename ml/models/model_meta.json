@@ -1,0 +1,41 @@
+{
+  "model_version": "sklearn-rf-1.0",
+  "feature_order": [
+    "event_count_first_n",
+    "time_sec",
+    "hints_used",
+    "deaths",
+    "score",
+    "event::jump",
+    "event::puzzle_completed",
+    "event::enemy_killed"
+  ],
+  "archetypes": [
+    "explorer",
+    "achiever",
+    "socializer",
+    "killer"
+  ],
+  "adaptation_by_archetype": {
+    "explorer": {
+      "difficulty": 0.85,
+      "enemy_density": 0.9,
+      "loot_multiplier": 1.2
+    },
+    "achiever": {
+      "difficulty": 1.2,
+      "enemy_density": 1.1,
+      "loot_multiplier": 1.0
+    },
+    "socializer": {
+      "difficulty": 0.95,
+      "enemy_density": 0.85,
+      "loot_multiplier": 1.15
+    },
+    "killer": {
+      "difficulty": 1.35,
+      "enemy_density": 1.4,
+      "loot_multiplier": 0.95
+    }
+  }
+}

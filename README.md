@@ -45,7 +45,8 @@ docker compose up --build -d
 2. Включите плагин в **Project Settings → Plugins**.
 3. URL ingest: `http://localhost:8000/telemetry/ingest`.
 
-Подробно: [godot-plugin/README.md](godot-plugin/README.md), [docs/integration.md](docs/integration.md).
+Подробно: [godot-plugin/README.md](godot-plugin/README.md), [docs/integration.md](docs/integration.md).  
+**Сквозной тест:** [docs/E2E.md](docs/E2E.md)
 
 ## Локальная разработка без Docker
 
@@ -65,13 +66,14 @@ python -m uvicorn main:app --port 8001
 
 Тесты backend: `cd backend` → `pip install -r requirements-dev.txt` → `pytest tests/ -v`
 
-Seed: `python scripts/seed_data.py --sessions 100 --events-per-session 10`
+Seed: `.\scripts\seed.ps1` → ML из БД: `.\scripts\train-from-db.ps1`
 
 ## Документация
 
 | Файл | Содержание |
 |------|------------|
 | [docs/integration.md](docs/integration.md) | HTTP + JSON для плагина |
-| [docs/ml-roadmap.md](docs/ml-roadmap.md) | Что осталось по ML |
+| [docs/ml-roadmap.md](docs/ml-roadmap.md) | План по ML |
+| [docs/E2E.md](docs/E2E.md) | Сквозной тест Godot → API → ML |
 | [backend/README.md](backend/README.md) | API, env, тесты |
 | [ml/README.md](ml/README.md) | ML runtime |

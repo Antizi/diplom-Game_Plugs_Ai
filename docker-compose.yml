@@ -47,6 +47,10 @@ services:
     restart: unless-stopped
     ports:
       - "8001:8001"
+    environment:
+      MODELS_DIR: /app/models
+    volumes:
+      - ./ml/models:/app/models
 
 volumes:
   pgdata:

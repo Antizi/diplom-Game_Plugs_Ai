@@ -28,6 +28,7 @@ htmlcov/
 # Датасеты (они обычно тяжелые)
 *.csv
 *.json
+!ml/models/model_meta.json
 
 # Секреты (пароли, ключи)
 .env

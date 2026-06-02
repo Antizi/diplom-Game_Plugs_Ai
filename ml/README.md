@@ -29,6 +29,25 @@ curl -X POST http://localhost:8001/predict `
   -d '{"session_id":"s1","player_id":"p1","features":{"score":10},"archetypes":["explorer","achiever"]}'
 ```
 
+## Обучение модели
+
+**Из PostgreSQL (рекомендуется после seed):**
+
+```powershell
+.\scripts\seed.ps1 -Sessions 500 -EventsPerSession 12
+.\scripts\train-from-db.ps1
+docker compose restart ml
+```
+
+**Синтетика (без БД):**
+
+```powershell
+.\scripts\train-ml.ps1
+```
+
+Артефакты: `ml/models/classifier.onnx`, `ml/models/model_meta.json`.  
+Docker при сборке обучает синтетику; для prod — переобучите из БД и перезапустите `ml`.
+
 ## Исследования
 
 Прототип LSTM (обучение offline, не runtime): [research/lstm/README.md](research/lstm/README.md)

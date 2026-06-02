@@ -1,22 +1,32 @@
 extends Node
-## Пример для своего тестового узла в проекте разработчика.
-## Не входит в аддон — скопируйте логику или подключите скрипт на Node в демо-сцене.
+## Минимальная проверка cloud: повесьте на Node в своём Godot-проекте.
+
+@onready var _game_manager: GameManager = GameManager.new()
 
 func _ready() -> void:
 	if not Analytics:
 		push_error("Включите плагин: Project → Project Settings → Plugins → Analytics Plugin")
 		return
 
-	Analytics.initialize()
-	Analytics.adaptation_received.connect(_on_adaptation_received)
-	Analytics.start_new_game("example-1.0")
+	add_child(_game_manager)
+	_game_manager.adaptation_applied.connect(_on_adaptation_applied)
 
-	Analytics.track("test_event", {"message": "hello", "time_sec": 1.0})
-	Analytics.set_state("test_mode", true)
-	print(Analytics.get_stats())
+	_game_manager.start_new_game("integration-test-1.0")
 
-func _on_adaptation_received(adaptation: Dictionary) -> void:
-	print("adaptation_received:", adaptation)
+	for i in range(12):
+		_game_manager.track_event("puzzle_completed", {
+			"time_sec": 10.0 + i * 3.0,
+			"hints_used": i % 3,
+			"deaths": i % 2,
+			"score": 10.0 * (i + 1),
+		})
+		await get_tree().create_timer(0.15).timeout
+
+	print("Stats:", Analytics.get_stats())
+
+func _on_adaptation_applied(params: Dictionary) -> void:
+	print("✅ adaptation applied in game:", params)
+	print("   difficulty = ", _game_manager.current_difficulty)
 
 func _exit_tree() -> void:
 	if Analytics:

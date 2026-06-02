@@ -6,9 +6,9 @@ from typing import Any, Dict, List, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-app = FastAPI(title="ML Predict Service", version="0.2.0")
+from predictor import get_engine
 
-DEFAULT_ARCHETYPES = ["explorer", "achiever", "socializer", "killer"]
+app = FastAPI(title="ML Predict Service", version="0.3.0")
 
 
 class PredictIn(BaseModel):
@@ -26,29 +26,36 @@ class PredictOut(BaseModel):
     model_version: str
 
 
-def _predict(features: Dict[str, float], archetypes: List[str]) -> PredictOut:
-    score = abs(sum(features.values())) if features else 0.0
-    if not archetypes:
-        archetypes = DEFAULT_ARCHETYPES
-    idx = int(score) % len(archetypes)
-    return PredictOut(
-        predicted_archetype=archetypes[idx],
-        confidence=0.55 + min(0.35, score * 0.01),
-        recommended_adaptation={
-            "difficulty": 1 + (idx % 3),
-            "enemy_density": 1.0 + idx * 0.2,
-            "loot_multiplier": 1.0 + (idx % 2) * 0.15,
-        },
-        model_version="ml-heuristic-0.2",
-    )
+@app.on_event("startup")
+def _startup() -> None:
+    engine = get_engine()
+    if engine.model_loaded:
+        print(f"ONNX model loaded: {engine.model_version}")
+    else:
+        print("ONNX not found — using heuristic fallback")
 
 
 @app.get("/health")
-def health() -> Dict[str, str]:
-    return {"status": "ok", "service": "ml-predict"}
+def health() -> Dict[str, Any]:
+    engine = get_engine()
+    return {
+        "status": "ok",
+        "service": "ml-predict",
+        "model_loaded": engine.model_loaded,
+        "model_version": engine.model_version,
+    }
 
 
 @app.post("/predict", response_model=PredictOut)
 def predict(payload: PredictIn) -> PredictOut:
-    archetypes = payload.archetypes or DEFAULT_ARCHETYPES
-    return _predict(payload.features, archetypes)
+    engine = get_engine()
+    predicted, confidence, adaptation, version = engine.predict(
+        payload.features,
+        payload.archetypes,
+    )
+    return PredictOut(
+        predicted_archetype=predicted,
+        confidence=confidence,
+        recommended_adaptation=adaptation,
+        model_version=version,
+    )
