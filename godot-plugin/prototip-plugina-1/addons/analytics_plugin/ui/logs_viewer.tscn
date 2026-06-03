@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://logsviewer01"]
+
+[ext_resource type="Script" path="res://addons/analytics_plugin/ui/logs_viewer.gd" id="1_logs"]
+
+[node name="LogsViewer" type="Window"]
+title = "Логи телеметрии"
+initial_position = 2
+size = Vector2i(640, 420)
+visible = false
+exclusive = false
+script = ExtResource("1_logs")
+
+[node name="MainMargin" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="MainVBox" type="VBoxContainer" parent="MainMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LogsText" type="TextEdit" parent="MainMargin/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+editable = false
+wrap_mode = 1
+
+[node name="ButtonsHBox" type="HBoxContainer" parent="MainMargin/MainVBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="RefreshBtn" type="Button" parent="MainMargin/MainVBox/ButtonsHBox"]
+layout_mode = 2
+text = "Обновить"
+
+[node name="CloseBtn" type="Button" parent="MainMargin/MainVBox/ButtonsHBox"]
+layout_mode = 2
+text = "Закрыть"

@@ -47,9 +47,12 @@ addons/analytics_plugin/
 | Задача | Статус |
 |--------|--------|
 | Синхронизация ML-профиля → `PUT /game/profile` при сохранении в редакторе | ✅ |
+| Буфер не теряется при ошибке сети + offline JSONL | ✅ |
+| Retry / cache_when_offline из настроек облака | ✅ |
+| Список событий в `ml_profile.json` + копирование `track()` snippet | ✅ |
+| Проверка сервера + блок последней адаптации в панели | ✅ |
+| `AdaptationBridge` node для игры | ✅ `addons/.../game/adaptation_bridge.gd` |
 | Локальный режим: буфер SQLite + offline ONNX | не сделано |
-| Очередь повторной отправки при сетевых ошибках | частично |
-| Применение `adaptation.parameters` в игре | ✅ пример в `examples/game_manager.gd` |
 | Экспорт/импорт профиля в репозиторий (опционально `*.json.example`) | опционально |
 
 ## Тестирование без своей игры

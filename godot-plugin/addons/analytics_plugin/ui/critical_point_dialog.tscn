@@ -1,0 +1,137 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8kp0intdlg01"]
+
+[ext_resource type="Script" path="res://addons/analytics_plugin/ui/critical_point_dialog.gd" id="1_cpdlg"]
+
+[node name="CriticalPointDialog" type="Window"]
+title = "Критическая точка сбора метрик"
+initial_position = 2
+size = Vector2i(520, 480)
+visible = false
+exclusive = true
+script = ExtResource("1_cpdlg")
+
+[node name="MainMargin" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="MainVBox" type="VBoxContainer" parent="MainMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HintLabel" type="Label" parent="MainMargin/MainVBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Укажите, откуда в игре брать данные и что именно записывать в телеметрию игрока."
+
+[node name="NameHBox" type="HBoxContainer" parent="MainMargin/MainVBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="MainMargin/MainVBox/NameHBox"]
+layout_mode = 2
+text = "Название точки:"
+
+[node name="NameInput" type="LineEdit" parent="MainMargin/MainVBox/NameHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "puzzle_solved, boss_defeated"
+
+[node name="SourceTypeHBox" type="HBoxContainer" parent="MainMargin/MainVBox"]
+layout_mode = 2
+
+[node name="SourceTypeLabel" type="Label" parent="MainMargin/MainVBox/SourceTypeHBox"]
+layout_mode = 2
+text = "Источник:"
+
+[node name="SourceTypeOption" type="OptionButton" parent="MainMargin/MainVBox/SourceTypeHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+item_count = 3
+item_0/text = "Функция"
+item_1/id = 1
+item_1/text = "Сцена"
+item_2/id = 2
+item_2/text = "Элемент (нода)"
+
+[node name="SourcePathHBox" type="HBoxContainer" parent="MainMargin/MainVBox"]
+layout_mode = 2
+
+[node name="SourcePathLabel" type="Label" parent="MainMargin/MainVBox/SourcePathHBox"]
+layout_mode = 2
+text = "Путь / имя:"
+
+[node name="SourcePathInput" type="LineEdit" parent="MainMargin/MainVBox/SourcePathHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "on_level_complete"
+
+[node name="CollectTitle" type="Label" parent="MainMargin/MainVBox"]
+layout_mode = 2
+text = "Что собирать с игрока:"
+
+[node name="CollectVBox" type="VBoxContainer" parent="MainMargin/MainVBox"]
+layout_mode = 2
+
+[node name="CollectDurationCheck" type="CheckBox" parent="MainMargin/MainVBox/CollectVBox"]
+layout_mode = 2
+text = "Длительность / время"
+
+[node name="CollectCountCheck" type="CheckBox" parent="MainMargin/MainVBox/CollectVBox"]
+layout_mode = 2
+button_pressed = true
+text = "Количество срабатываний"
+
+[node name="CollectValueCheck" type="CheckBox" parent="MainMargin/MainVBox/CollectVBox"]
+layout_mode = 2
+text = "Числовое значение"
+
+[node name="CollectEnterExitCheck" type="CheckBox" parent="MainMargin/MainVBox/CollectVBox"]
+layout_mode = 2
+text = "Вход и выход (сцена / нода)"
+
+[node name="CustomPropsHBox" type="HBoxContainer" parent="MainMargin/MainVBox"]
+layout_mode = 2
+
+[node name="CustomPropsLabel" type="Label" parent="MainMargin/MainVBox/CustomPropsHBox"]
+layout_mode = 2
+text = "Свойства:"
+
+[node name="CustomPropsInput" type="LineEdit" parent="MainMargin/MainVBox/CustomPropsHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "score, attempts (через запятую)"
+
+[node name="WeightHBox" type="HBoxContainer" parent="MainMargin/MainVBox"]
+layout_mode = 2
+
+[node name="WeightLabel" type="Label" parent="MainMargin/MainVBox/WeightHBox"]
+layout_mode = 2
+text = "Вес метрики:"
+
+[node name="WeightSpin" type="SpinBox" parent="MainMargin/MainVBox/WeightHBox"]
+layout_mode = 2
+min_value = 0.1
+max_value = 10.0
+step = 0.1
+value = 1.0
+
+[node name="HSeparator" type="HSeparator" parent="MainMargin/MainVBox"]
+layout_mode = 2
+
+[node name="ButtonsHBox" type="HBoxContainer" parent="MainMargin/MainVBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="SaveBtn" type="Button" parent="MainMargin/MainVBox/ButtonsHBox"]
+layout_mode = 2
+text = "Сохранить"
+
+[node name="CancelBtn" type="Button" parent="MainMargin/MainVBox/ButtonsHBox"]
+layout_mode = 2
+text = "Отмена"
