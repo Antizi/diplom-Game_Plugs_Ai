@@ -15,27 +15,31 @@ func _ready() -> void:
 	boot_analytics()
 
 func boot_analytics() -> void:
-	if not Analytics:
+	var analytics = get_node_or_null("/root/Analytics")
+	if not analytics:
 		push_error("Analytics autoload не найден. Включите плагин в Project Settings → Plugins.")
 		return
-	Analytics.initialize()
-	if not Analytics.adaptation_received.is_connected(_on_adaptation_received):
-		Analytics.adaptation_received.connect(_on_adaptation_received)
+	analytics.initialize()
+	if not analytics.adaptation_received.is_connected(_on_adaptation_received):
+		analytics.adaptation_received.connect(_on_adaptation_received)
 
 func start_new_game(game_version: String = "1.0.0") -> void:
 	current_difficulty = 1.0
 	current_enemy_density = 1.0
 	current_loot_multiplier = 1.0
-	if Analytics:
-		Analytics.start_new_game(game_version)
+	var analytics = get_node_or_null("/root/Analytics")
+	if analytics:
+		analytics.start_new_game(game_version)
 
 func quit_to_menu() -> void:
-	if Analytics:
-		Analytics.end_game()
+	var analytics = get_node_or_null("/root/Analytics")
+	if analytics:
+		analytics.end_game()
 
 func track_event(event_name: String, parameters: Dictionary = {}) -> void:
-	if Analytics:
-		Analytics.track(event_name, parameters)
+	var analytics = get_node_or_null("/root/Analytics")
+	if analytics:
+		analytics.track(event_name, parameters)
 
 func _on_adaptation_received(adaptation: Dictionary) -> void:
 	var params: Dictionary = adaptation.get("parameters", {})
