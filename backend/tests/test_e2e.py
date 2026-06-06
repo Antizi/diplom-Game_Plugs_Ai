@@ -33,8 +33,28 @@ def client():
         yield c
 
 
+@pytest.fixture(scope="module", autouse=True)
+def setup_profile(client):
+    """Восстанавливает рабочий профиль перед E2E тестами (как Godot sync_game_profile)."""
+    r = client.put("/game/profile", json={
+        "model_version": "default",
+        "critical_points": [
+            {"name": "score", "weight": 1.0},
+            {"name": "deaths", "weight": 2.0},
+            {"name": "time_sec", "weight": 1.0},
+        ],
+        "archetypes": ["explorer", "achiever", "socializer", "killer"],
+        "bootstrap_actions": 10,
+        "feature_order": [
+            "event_count_first_n", "score", "deaths", "time_sec",
+            "event::jump", "event::enemy_killed", "event::item_collected", "event::level_complete",
+        ],
+    })
+    assert r.status_code == 200, r.text
+
+
 @pytest.fixture(scope="module")
-def session_id(client):
+def session_id(client, setup_profile):
     r = client.post(f"/game/session/start?player_id={PLAYER_ID}&game_version=e2e-1.0")
     assert r.status_code == 200, r.text
     sid = r.json()["session_id"]
