@@ -119,7 +119,8 @@ class PredictorEngine:
                 predicted = archetypes[label % len(archetypes)]
 
             if probs is not None:
-                confidence = float(max(probs))
+                prob_values = list(probs.values()) if isinstance(probs, dict) else list(probs)
+                confidence = float(max(prob_values))
                 confidence = min(1.0, max(0.0, confidence))
             else:
                 confidence = 0.7
