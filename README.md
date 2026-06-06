@@ -1,35 +1,60 @@
-# Дипломный проект DiplicsTM — адаптивный геймплей на телеметрии
+# DiplicsTM — адаптивный геймплей на телеметрии
 
-Godot-аддон → Backend API (PostgreSQL) → ML-service (`/predict`).
+Дипломный проект: Godot-плагин собирает игровые события, backend строит ML-признаки, ML-сервис определяет архетип игрока и возвращает параметры адаптации (сложность, плотность врагов, лут). Игра применяет их в реальном времени — геймплей подстраивается под стиль каждого игрока.
+
+```
+Godot (analytics_plugin)
+    │  HTTP POST /telemetry/ingest
+    ▼
+Backend (FastAPI + PostgreSQL)         порт 8000
+    │  build_features → POST /predict
+    ▼
+ML-service (FastAPI + ONNX)            порт 8001
+    │  predicted_archetype + adaptation
+    ▼
+Godot → сигнал adaptation_received → difficulty / enemy_density / loot_multiplier
+```
 
 ## Команда
 
-- Изотов Антон — ML / Data Science
-- Артамонов Федор — Godot / плагин
-- Самигуллин Максим — Backend / БД
+| Участник | Роль |
+|----------|------|
+| Изотов Антон | ML / Data Science — `ml/` |
+| Артамонов Федор | Godot / плагин — `godot-plugin/` |
+| Самигуллин Максим | Backend / БД — `backend/` |
 
 ## Структура репозитория
 
-```text
+```
 diplom-Game_Plugs_Ai/
 ├── docker-compose.yml
 ├── .env.example
-├── backend/                    # FastAPI (пакет app/)
-├── ml/                           # POST /predict
-│   └── research/lstm/            # офлайн-прототип
+├── backend/                      # FastAPI (пакет app/)
+│   ├── app/
+│   │   ├── routes/               # game, telemetry, sessions
+│   │   └── services/             # ingest, features, ml_client
+│   ├── migrations/               # SQL-миграции (идемпотентные)
+│   ├── scripts/seed_data.py      # генерация тестовых данных
+│   └── tests/                    # unit + интеграция + E2E
+├── ml/                           # ML-сервис (ONNX + обучение)
+│   ├── predictor.py              # инференс
+│   ├── training/export.py        # sklearn → ONNX
+│   └── scripts/train_model.py    # синтетическая модель (seed)
 ├── godot-plugin/
-│   ├── addons/analytics_plugin/  # ← отдавать разработчикам игр
-│   └── examples/                 # шаблоны GDScript (не аддон)
+│   ├── addons/analytics_plugin/  # ← устанавливать в игровой проект
+│   └── examples/                 # шаблоны GDScript
 └── docs/
-    ├── integration.md            # JSON-контракт API
-    └── ml-roadmap.md             # план по ML-service
+    ├── vision.md                 # архитектура и решения
+    ├── integration.md            # HTTP-контракт для плагина
+    └── ml-roadmap.md             # план ML
 ```
 
-## Быстрый старт (backend + ML)
+## Быстрый старт
+
+### 1. Запуск стека
 
 ```powershell
-# из корня репозитория
-copy .env.example .env   # при необходимости
+copy .env.example .env        # при необходимости поправить пароли
 docker compose up --build -d
 ```
 
@@ -37,49 +62,111 @@ docker compose up --build -d
 |--------|-----|
 | API + Swagger | http://localhost:8000/docs |
 | ML health | http://localhost:8001/health |
-| Postgres | localhost:5432 |
+| Postgres | localhost:5432 / gamedb |
 
-## Godot — перенос плагина в новый проект
+### 2. Первый запуск — наполнить БД и обучить модель
 
-1. Скопируйте **только** `godot-plugin/addons/analytics_plugin/` → `ваш_проект/addons/analytics_plugin/` (не копируйте `prototip-plugina-1/` и `.godot/`).
-2. Откройте свой `project.godot` в Godot 4 → **Project → Project Settings → Plugins** → включите **Analytics Plugin** (autoload `Analytics` добавится автоматически).
-3. Вкладка **Analytics** внизу редактора → **Настроить облачный режим** → URL: `http://localhost:8000/telemetry/ingest` → Сохранить.
-4. В игре: `Analytics.initialize()` → `start_new_game` → `track` → `end_game` (шаблоны: `godot-plugin/examples/`).
+На чистой БД ML работает в режиме эвристики. Для полноценного обучения:
 
 ```powershell
-# пример копирования (Windows)
-Copy-Item -Recurse -Force godot-plugin\addons\analytics_plugin C:\path\to\your_game\addons\analytics_plugin
+# Сгенерировать 1000 размеченных сессий (50 игроков, 4 архетипа)
+cd backend
+pip install -r requirements-dev.txt
+$env:DB_HOST="localhost"; $env:DB_PASSWORD="postgres"
+py scripts/seed_data.py --sessions 1000 --events-per-session 12
+
+# Обучить ONNX-модель на данных из Postgres
+Invoke-WebRequest -Uri "http://localhost:8000/game/train" -Method POST
 ```
 
-Подробная инструкция: [godot-plugin/README.md](godot-plugin/README.md) · API: [docs/integration.md](docs/integration.md) · E2E: [docs/E2E.md](docs/E2E.md)
+После обучения `/health` ML-сервиса покажет `"model_loaded": true` и версию модели.
+
+### 3. Проверить что всё работает
+
+```powershell
+# Health
+Invoke-WebRequest -Uri "http://localhost:8000/health" -UseBasicParsing
+Invoke-WebRequest -Uri "http://localhost:8001/health" -UseBasicParsing
+
+# Полный E2E-тест через API (без Godot)
+cd backend
+$env:DB_HOST="localhost"; $env:DB_USER="postgres"
+$env:DB_PASSWORD="postgres"; $env:DB_NAME="gamedb"
+$env:ML_SERVICE_URL="http://localhost:8001"; $env:ML_PREDICT_ENABLED="true"
+py -m pytest tests/ -v
+```
+
+Ожидаемый результат: **13 passed** (3 unit + 3 integration + 7 E2E).
+
+## Godot — подключение плагина к проекту
+
+1. Скопируйте папку `godot-plugin/addons/analytics_plugin/` в корень вашего Godot-проекта.
+2. Откройте **Project → Project Settings → Plugins** → включите **Analytics Plugin** (autoload `Analytics` добавится автоматически).
+3. Вкладка **Analytics** в редакторе → **Настройки облака** → URL: `http://localhost:8000/telemetry/ingest` → Сохранить.
+4. В коде игры:
+
+```gdscript
+# _ready() главного узла
+Analytics.initialize()
+Analytics.start_new_game("1.0.0")
+Analytics.adaptation_received.connect(_on_adaptation)
+
+func _on_adaptation(params: Dictionary) -> void:
+    difficulty    = params.get("difficulty",    1.0)
+    enemy_density = params.get("enemy_density", 1.0)
+
+# В игровых событиях
+Analytics.track("level_complete", {"time_sec": 120.0, "deaths": 2, "score": 95})
+
+# При выходе
+Analytics.end_game()
+```
+
+Шаблоны: `godot-plugin/examples/` · Детали: [godot-plugin/README.md](godot-plugin/README.md) · Контракт: [docs/integration.md](docs/integration.md)
+
+## Переменные окружения
+
+Файл `.env` (пример — `.env.example`):
+
+| Переменная | По умолчанию | Описание |
+|-----------|-------------|----------|
+| `POSTGRES_PASSWORD` | `postgres` | Пароль Postgres |
+| `ML_PREDICT_ENABLED` | `true` | Включить ML-предсказания |
+| `BOOTSTRAP_ACTIONS` | `10` | Событий до первого predict |
 
 ## Локальная разработка без Docker
 
 ```powershell
 # Backend
 cd backend
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 $env:DB_HOST="localhost"; $env:DB_PASSWORD="postgres"
-python -m uvicorn app.main:app --reload --port 8000
+py -m uvicorn app.main:app --reload --port 8000
 
-# ML
+# ML-сервис (другой терминал)
 cd ml
 pip install -r requirements.txt
-$env:ML_SERVICE_URL="http://localhost:8001"   # для ручной проверки predict
-python -m uvicorn main:app --port 8001
+py -m uvicorn main:app --port 8001
 ```
 
-Тесты backend: `cd backend` → `pip install -r requirements-dev.txt` → `pytest tests/ -v`
+## Тесты
 
-Seed: `.\scripts\seed.ps1` → ML из БД: `.\scripts\train-from-db.ps1`
+```powershell
+cd backend
+$env:DB_HOST="localhost"; $env:DB_USER="postgres"
+$env:DB_PASSWORD="postgres"; $env:DB_NAME="gamedb"
+$env:ML_SERVICE_URL="http://localhost:8001"; $env:ML_PREDICT_ENABLED="true"
+
+py -m pytest tests/ -v                        # все тесты
+py -m pytest tests/test_features.py -v        # только unit
+py -m pytest tests/test_e2e.py -v -s          # E2E с выводом
+```
 
 ## Документация
 
 | Файл | Содержание |
 |------|------------|
-| [docs/vision.md](docs/vision.md) | Идея проекта, cloud-only ML, задачи по компонентам |
-| [docs/integration.md](docs/integration.md) | HTTP + JSON для плагина |
-| [docs/ml-roadmap.md](docs/ml-roadmap.md) | План по ML |
-| [docs/E2E.md](docs/E2E.md) | Сквозной тест Godot → API → ML |
-| [backend/README.md](backend/README.md) | API, env, тесты |
-| [ml/README.md](ml/README.md) | ML runtime |
+| [docs/vision.md](docs/vision.md) | Идея, архитектура, cloud-only ML |
+| [docs/integration.md](docs/integration.md) | HTTP + JSON контракт для плагина |
+| [docs/ml-roadmap.md](docs/ml-roadmap.md) | Статус и план ML |
+| [godot-plugin/README.md](godot-plugin/README.md) | Установка аддона |

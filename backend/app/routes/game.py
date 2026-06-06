@@ -23,6 +23,11 @@ def _utcnow() -> datetime:
     "/session/start",
     response_model=schemas.Session,
     summary="Начать новую игровую сессию",
+    description=(
+        "Создаёт запись игрока (если не существует) и открывает новую сессию. "
+        "Вызывается плагином при `Analytics.start_new_game()`. "
+        "Возвращает `session_id` (UUID), который нужно передавать во все последующие запросы."
+    ),
 )
 def start_session(
     player_id: str,
@@ -53,6 +58,10 @@ def start_session(
     "/session/{session_id}/end",
     response_model=schemas.Session,
     summary="Завершить игровую сессию",
+    description=(
+        "Проставляет `ended_at` для сессии. Идемпотентен: повторный вызов возвращает "
+        "уже закрытую сессию без изменений. Вызывается плагином при `Analytics.end_game()`."
+    ),
 )
 def end_session(session_id: UUID, db: Session = Depends(get_db)):
     session = db.query(models.Session).filter(models.Session.session_id == session_id).first()
@@ -70,6 +79,12 @@ def end_session(session_id: UUID, db: Session = Depends(get_db)):
     "/adaptation/{session_id}",
     response_model=schemas.AdaptationOut,
     summary="Получить параметры адаптации для сессии",
+    description=(
+        "Возвращает последнее ML-предсказание для сессии в виде параметров адаптации "
+        "(`difficulty`, `enemy_density`, `loot_multiplier`). "
+        "Адаптация появляется после того, как число событий в сессии достигает `bootstrap_actions`. "
+        "404 — если предсказаний ещё нет."
+    ),
 )
 def get_adaptation(session_id: UUID, db: Session = Depends(get_db)):
     prediction = (
@@ -93,6 +108,13 @@ def get_adaptation(session_id: UUID, db: Session = Depends(get_db)):
     "/profile",
     response_model=schemas.GameProfileOut,
     summary="Создать или обновить профиль модели",
+    description=(
+        "Сохраняет ML-профиль игры: список событий (`feature_order`), критические метрики "
+        "(`critical_points` с весами), архетипы игроков и `bootstrap_actions`. "
+        "Вызывается из панели редактора Godot при нажатии «Синхронизировать профиль». "
+        "Upsert по `model_version`: если профиль с таким именем уже есть — обновляется "
+        "и становится активным для последующих ingest-запросов."
+    ),
 )
 def upsert_game_profile(
     payload: schemas.GameProfileUpsertIn,
@@ -139,6 +161,11 @@ def upsert_game_profile(
     "/profile",
     response_model=schemas.GameProfileOut,
     summary="Получить актуальный профиль модели",
+    description=(
+        "Возвращает последний активный профиль (по времени обновления): "
+        "архетипы, критические точки, feature_order и bootstrap_actions. "
+        "Используется для отладки и в панели редактора Godot."
+    ),
 )
 def get_game_profile(db: Session = Depends(get_db)):
     profile = (
@@ -155,6 +182,13 @@ def get_game_profile(db: Session = Depends(get_db)):
     "/train",
     response_model=schemas.TrainOut,
     summary="Запустить обучение ML-модели на данных из Postgres",
+    description=(
+        "Проксирует запрос в ML-сервис (`POST /train`), который читает сессии и события "
+        "из Postgres, строит датасет, обучает RandomForest, экспортирует ONNX-модель "
+        "и перезагружает её без рестарта контейнера. "
+        "Требует ≥ 10 сессий с достаточным числом событий в БД. "
+        "Вызывается из панели редактора Godot кнопкой «Обучить модель» или вручную."
+    ),
 )
 def trigger_training():
     if not ML_SERVICE_URL:
