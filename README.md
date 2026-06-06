@@ -39,14 +39,19 @@ docker compose up --build -d
 | ML health | http://localhost:8001/health |
 | Postgres | localhost:5432 |
 
-## Godot (только аддон)
+## Godot — перенос плагина в новый проект
 
-1. Скопируйте `godot-plugin/addons/analytics_plugin/` → `ваш_проект/addons/analytics_plugin/`.
-2. Включите плагин в **Project Settings → Plugins**.
-3. URL ingest: `http://localhost:8000/telemetry/ingest`.
+1. Скопируйте **только** `godot-plugin/addons/analytics_plugin/` → `ваш_проект/addons/analytics_plugin/` (не копируйте `prototip-plugina-1/` и `.godot/`).
+2. Откройте свой `project.godot` в Godot 4 → **Project → Project Settings → Plugins** → включите **Analytics Plugin** (autoload `Analytics` добавится автоматически).
+3. Вкладка **Analytics** внизу редактора → **Настроить облачный режим** → URL: `http://localhost:8000/telemetry/ingest` → Сохранить.
+4. В игре: `Analytics.initialize()` → `start_new_game` → `track` → `end_game` (шаблоны: `godot-plugin/examples/`).
 
-Подробно: [godot-plugin/README.md](godot-plugin/README.md), [docs/integration.md](docs/integration.md).  
-**Сквозной тест:** [docs/E2E.md](docs/E2E.md)
+```powershell
+# пример копирования (Windows)
+Copy-Item -Recurse -Force godot-plugin\addons\analytics_plugin C:\path\to\your_game\addons\analytics_plugin
+```
+
+Подробная инструкция: [godot-plugin/README.md](godot-plugin/README.md) · API: [docs/integration.md](docs/integration.md) · E2E: [docs/E2E.md](docs/E2E.md)
 
 ## Локальная разработка без Docker
 
@@ -72,6 +77,7 @@ Seed: `.\scripts\seed.ps1` → ML из БД: `.\scripts\train-from-db.ps1`
 
 | Файл | Содержание |
 |------|------------|
+| [docs/vision.md](docs/vision.md) | Идея проекта, cloud-only ML, задачи по компонентам |
 | [docs/integration.md](docs/integration.md) | HTTP + JSON для плагина |
 | [docs/ml-roadmap.md](docs/ml-roadmap.md) | План по ML |
 | [docs/E2E.md](docs/E2E.md) | Сквозной тест Godot → API → ML |

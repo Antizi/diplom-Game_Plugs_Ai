@@ -7,7 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import models
-from app.config import CORS_ORIGINS, MODELS_DIR
+from app.config import CORS_ORIGINS
 from app.database import SessionLocal, engine
 from app.routes import game, sessions, telemetry
 
@@ -37,7 +37,6 @@ def _run_migrations() -> None:
 async def lifespan(app: FastAPI):
     models.Base.metadata.create_all(bind=engine)
     _run_migrations()
-    MODELS_DIR.mkdir(parents=True, exist_ok=True)
     yield
 
 
@@ -48,8 +47,8 @@ app = FastAPI(
 
     Единая точка входа для Godot-плагина:
     * Сессии и события
-    * `/telemetry/ingest` — сохранение + ML + адаптация
-    * Профили игр и ONNX-модели для офлайн-режима
+    * `/telemetry/ingest` — сохранение + ML-предсказание каждые N событий
+    * `/game/train` — запуск обучения модели на накопленных данных
     """,
     version="0.4.0",
     lifespan=lifespan,

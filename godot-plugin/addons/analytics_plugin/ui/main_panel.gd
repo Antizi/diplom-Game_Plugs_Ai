@@ -8,6 +8,7 @@ const LOGS_VIEWER_SCENE = preload("res://addons/analytics_plugin/ui/logs_viewer.
 const AnalyticsResolver = preload("res://addons/analytics_plugin/editor/analytics_resolver.gd")
 @onready var connection_settings_btn = $ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/NetworkButtons/ConnectionSettingsBtn
 @onready var check_server_btn = $ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/NetworkButtons/CheckServerBtn
+@onready var train_model_btn = $ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/NetworkButtons/TrainModelBtn
 @onready var server_status_label = $ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/StatusPanel/StatusMargin/StatusVBox/ServerStatusLabel
 @onready var status_label = $ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/StatusPanel/StatusMargin/StatusVBox/StatusLabel
 @onready var send_now_btn = $ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/ActionGrid/SendNowBtn
@@ -41,6 +42,7 @@ var critical_point_dialog = null
 var event_edit_dialog = null
 var logs_viewer_window = null
 var _stats_timer: Timer = null
+var _train_http: HTTPRequest = null
 
 func _ready():
 	_stats_timer = Timer.new()
@@ -58,6 +60,7 @@ func _ready():
 
 	connection_settings_btn.pressed.connect(_on_connection_settings_pressed)
 	check_server_btn.pressed.connect(_on_check_server_pressed)
+	train_model_btn.pressed.connect(_on_train_model_pressed)
 	add_event_btn.pressed.connect(_on_add_event_pressed)
 	copy_snippet_btn.pressed.connect(_on_copy_snippet_pressed)
 	edit_event_btn.pressed.connect(_on_edit_event_pressed)
@@ -96,6 +99,52 @@ func _on_adaptation_received(adaptation: Dictionary) -> void:
 
 func _on_server_available_changed(is_available: bool) -> void:
 	server_status_label.text = "Сервер: " + ("доступен" if is_available else "недоступен")
+
+
+func _on_train_model_pressed() -> void:
+	var analytics = _get_analytics()
+	if analytics == null:
+		_set_status("Analytics не найден", true)
+		return
+	var base_url = analytics._get_api_base_url() if analytics.has_method("_get_api_base_url") else ""
+	if base_url.is_empty():
+		_set_status("Укажите URL сервера в настройках облака", true)
+		return
+	var url = base_url + "/game/train"
+	train_model_btn.disabled = true
+	_set_status("Обучение модели… это может занять до минуты")
+	if _train_http == null:
+		_train_http = HTTPRequest.new()
+		_train_http.timeout = 300.0
+		add_child(_train_http)
+		_train_http.request_completed.connect(_on_train_completed)
+	var err = _train_http.request(url, [], HTTPClient.METHOD_POST)
+	if err != OK:
+		train_model_btn.disabled = false
+		_set_status("Ошибка запуска HTTP: " + str(err), true)
+
+
+func _on_train_completed(result: int, response_code: int, _headers, body: PackedByteArray) -> void:
+	train_model_btn.disabled = false
+	if result != HTTPRequest.RESULT_SUCCESS:
+		_set_status("Сетевая ошибка обучения: " + str(result), true)
+		return
+	if response_code < 200 or response_code >= 300:
+		var detail = body.get_string_from_utf8()
+		_set_status("Обучение не удалось (HTTP %d): %s" % [response_code, detail.substr(0, 120)], true)
+		return
+	var json = JSON.new()
+	if json.parse(body.get_string_from_utf8()) != OK:
+		_set_status("Ответ от сервера не распознан", true)
+		return
+	var data: Dictionary = json.data
+	var samples = int(data.get("samples", 0))
+	var train_acc = "%.1f%%" % (float(data.get("train_accuracy", 0)) * 100)
+	var test_acc = "%.1f%%" % (float(data.get("test_accuracy", 0)) * 100)
+	var version = str(data.get("model_version", ""))
+	_set_status(
+		"Модель обучена: %d сессий, train %s, test %s (%s)" % [samples, train_acc, test_acc, version]
+	)
 
 
 func _on_check_server_pressed() -> void:

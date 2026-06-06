@@ -1,4 +1,18 @@
 ﻿from app.services.features import build_features_from_events
+from app.services.ingest import should_trigger_prediction
+
+
+def test_should_trigger_every_n_events():
+    # Первое предсказание при 10 событиях
+    assert should_trigger_prediction(10, 10, 0) is True
+    # Второе — при 20
+    assert should_trigger_prediction(20, 10, 1) is True
+    # 15 событий — уже было 1 предсказание, второго ещё нет
+    assert should_trigger_prediction(15, 10, 1) is False
+    # До порога — нет предсказания
+    assert should_trigger_prediction(9, 10, 0) is False
+    # После первого — при 19 событиях второго ещё нет
+    assert should_trigger_prediction(19, 10, 1) is False
 
 
 def test_build_features_counts_events():

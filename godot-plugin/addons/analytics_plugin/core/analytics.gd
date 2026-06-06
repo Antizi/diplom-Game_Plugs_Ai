@@ -8,7 +8,6 @@ signal stats_changed
 
 # Конфигурация
 var config = {
-	"mode": "cloud",
 	"buffer_size": 100,
 	"auto_send_interval": 30,
 	"cloud_url": "",
@@ -55,6 +54,7 @@ var _session_end_in_progress = false
 var last_adaptation: Dictionary = {}
 var _inflight_events: Array = []
 var _sync_in_progress: bool = false
+var _session_start_ticks: int = 0
 
 # Константы
 const CONFIG_PATH = "user://analytics_config.json"
@@ -95,7 +95,7 @@ func initialize(config_path = CONFIG_PATH) -> bool:
 	_init_cloud_sender()
 	initialized = true
 	call_deferred("_restore_pending_from_disk")
-	print("✅ Analytics готов. Вызовите start_new_game() при старте новой игры. Режим:", config.mode)
+	print("✅ Analytics готов. Вызовите start_new_game() при старте новой игры. Режим: cloud")
 	emit_signal("stats_changed")
 	return true
 
@@ -116,8 +116,9 @@ func start_new_game(game_version: String = "") -> bool:
 	server_session_ready = false
 	_session_start_in_progress = false
 	game_session_active = true
+	_session_start_ticks = Time.get_ticks_msec()
 
-	if config.mode == "cloud" and not str(config.get("cloud_url", "")).strip_edges().is_empty():
+	if not str(config.get("cloud_url", "")).strip_edges().is_empty():
 		if session_http and not _http_is_idle(session_http):
 			session_http.cancel_request()
 		_start_server_session()
@@ -136,7 +137,7 @@ func end_game() -> void:
 		sync_now()
 
 	var ending_session_id: String = session_id
-	if config.mode == "cloud" and _is_uuid(ending_session_id):
+	if _is_uuid(ending_session_id):
 		_end_server_session(ending_session_id)
 
 	game_session_active = false
@@ -195,7 +196,7 @@ func _build_telemetry_metadata() -> Dictionary:
 	return {
 		"critical_points": config.get("critical_points", []),
 		"archetypes": config.get("archetypes", []),
-		"model_mode": config.get("mode", "cloud"),
+		"model_mode": "cloud",
 		"feature_schema_version": config.get("feature_schema_version", 1)
 	}
 
@@ -526,7 +527,7 @@ func sync_now() -> bool:
 	event_buffer.clear()
 	_sync_in_progress = true
 
-	if config.mode == "cloud" and str(config.get("cloud_url", "")).strip_edges().is_empty():
+	if str(config.get("cloud_url", "")).strip_edges().is_empty():
 		_log("cloud_url пустой — события возвращены в буфер", true)
 		event_buffer = _inflight_events + event_buffer
 		_inflight_events.clear()
@@ -534,7 +535,7 @@ func sync_now() -> bool:
 		emit_signal("stats_changed")
 		return false
 
-	if config.mode == "cloud" and not server_session_ready:
+	if not server_session_ready:
 		_log("session_id ещё не получен, отложим отправку")
 		event_buffer = _inflight_events + event_buffer
 		_inflight_events.clear()
@@ -547,17 +548,11 @@ func sync_now() -> bool:
 	for event in _inflight_events:
 		event["session_id"] = session_id
 
-	if config.mode == "cloud" and cloud_sender:
+	if cloud_sender:
 		cloud_sender.send_events(_inflight_events, _build_telemetry_metadata())
-	elif config.mode == "local":
-		_log("Локальный режим: сохранение в БД (пока не реализовано)", true)
-		if bool(config.get("cache_when_offline", false)):
-			TelemetryPersistence.append_events(PENDING_PATH, _inflight_events)
-		event_buffer = _inflight_events + event_buffer
-		_inflight_events.clear()
-		_sync_in_progress = false
 	else:
-		_log("Demo: " + str(_inflight_events.size()) + " events (без cloud)")
+		_log("cloud_sender не создан — проверьте настройки облака", true)
+		event_buffer = _inflight_events + event_buffer
 		_inflight_events.clear()
 		_sync_in_progress = false
 
@@ -656,7 +651,7 @@ func get_stats() -> Dictionary:
 		"pending_disk": get_pending_disk_count(),
 		"session_id": session_id,
 		"player_id": player_id,
-		"mode": config.mode,
+		"mode": "cloud",
 		"auto_send_interval": config.auto_send_interval,
 		"state_keys": current_state.keys(),
 		"last_adaptation": last_adaptation.duplicate(true),
@@ -681,9 +676,7 @@ func _append_log_line(event: Dictionary) -> void:
 	file.store_line(JSON.stringify(event))
 	file.close()
 
-func _get_game_time():
-	# Возвращает время от начала игры (в секундах)
-	if Engine.get_main_loop():
-		# В Godot 4 время можно получить через Time
-		return Time.get_ticks_msec() / 1000.0  # конвертируем миллисекунды в секунды
-	return 0.0
+func _get_game_time() -> float:
+	if _session_start_ticks == 0:
+		return 0.0
+	return (Time.get_ticks_msec() - _session_start_ticks) / 1000.0

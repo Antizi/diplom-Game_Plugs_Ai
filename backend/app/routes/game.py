@@ -1,15 +1,14 @@
-﻿import hashlib
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.config import MODELS_DIR
+from app.config import ML_SERVICE_URL
 from app.deps import get_db
 from app.services.ingest import get_or_create_model
 
@@ -118,6 +117,8 @@ def upsert_game_profile(
         profile.archetypes = payload.archetypes
         profile.feature_schema_version = payload.feature_schema_version
         profile.feature_schema = feature_schema
+        # Делаем обновлённый профиль «активным»: get_or_create_model берёт latest по created_at
+        profile.created_at = _utcnow()
     else:
         profile = models.GameModel(
             model_version=payload.model_version,
@@ -150,82 +151,21 @@ def get_game_profile(db: Session = Depends(get_db)):
     return profile
 
 
-@router.get(
-    "/model/manifest",
-    response_model=schemas.ModelManifestOut,
-    summary="Манифест ONNX для офлайн-режима",
+@router.post(
+    "/train",
+    response_model=schemas.TrainOut,
+    summary="Запустить обучение ML-модели на данных из Postgres",
 )
-def get_model_manifest(db: Session = Depends(get_db)):
-    row = (
-        db.query(models.GameModel)
-        .order_by(models.GameModel.created_at.desc())
-        .first()
-    )
-    if not row:
-        raise HTTPException(status_code=404, detail="Model not registered for this game")
-    onnx = row.onnx or {}
-    return schemas.ModelManifestOut(
-        model_version=row.model_version,
-        game_profile_version=row.game_profile_version,
-        feature_schema_version=row.feature_schema_version,
-        format=onnx.get("format", "onnx"),
-        sha256=onnx.get("sha256"),
-        download_url=f"/game/model/download?version={row.model_version}",
-        created_at=row.created_at,
-    )
-
-
-@router.get(
-    "/model/download",
-    summary="Скачать ONNX-модель",
-)
-def download_model(
-    version: str,
-    db: Session = Depends(get_db),
-):
-    row = (
-        db.query(models.GameModel)
-        .filter(models.GameModel.model_version == version)
-        .first()
-    )
-    if not row:
-        raise HTTPException(status_code=404, detail="Model version not found")
-
-    onnx = row.onnx or {}
-    storage_path = onnx.get("storage_path")
-    if storage_path:
-        path = Path(storage_path)
-    else:
-        path = MODELS_DIR / version / "model.onnx"
-
-    if not path.is_file():
-        raise HTTPException(status_code=404, detail="Model file not found on server")
-
-    return FileResponse(
-        path,
-        media_type="application/octet-stream",
-        filename=f"{version}.onnx",
-    )
-
-
-def register_model_file(
-    db: Session,
-    model_version: str,
-    file_path: Path,
-    feature_schema_version: int = 1,
-) -> models.GameModel:
-    """Регистрация ONNX-файла (используется скриптами обучения)."""
-    sha = hashlib.sha256(file_path.read_bytes()).hexdigest()
-    row = models.GameModel(
-        model_version=model_version,
-        feature_schema_version=feature_schema_version,
-        onnx={
-            "format": "onnx",
-            "sha256": sha,
-            "storage_path": str(file_path),
-        },
-    )
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    return row
+def trigger_training():
+    if not ML_SERVICE_URL:
+        raise HTTPException(status_code=503, detail="ML_SERVICE_URL не задан")
+    try:
+        with httpx.Client(timeout=300.0) as client:
+            resp = client.post(f"{ML_SERVICE_URL.rstrip('/')}/train")
+            resp.raise_for_status()
+            return resp.json()
+    except httpx.HTTPStatusError as exc:
+        detail = exc.response.text[:300] if exc.response else str(exc)
+        raise HTTPException(status_code=502, detail=f"ML ошибка: {detail}")
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"ML недоступен: {exc}")
