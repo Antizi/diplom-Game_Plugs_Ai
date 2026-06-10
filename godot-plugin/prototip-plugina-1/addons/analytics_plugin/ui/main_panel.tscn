@@ -1,0 +1,330 @@
+[gd_scene load_steps=2 format=3 uid="uid://dpxpjwipylwka"]
+
+[ext_resource type="Script" uid="uid://dxgm0yoegfr3b" path="res://addons/analytics_plugin/ui/main_panel.gd" id="1_jr8lf"]
+
+[node name="Panel" type="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_jr8lf")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="MainMargin" type="MarginContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="MainVBox" type="VBoxContainer" parent="ScrollContainer/MainMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="HeaderVBox" type="VBoxContainer" parent="ScrollContainer/MainMargin/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="TitleLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/HeaderVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Analytics"
+
+[node name="SubtitleLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/HeaderVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.72, 1)
+theme_override_font_sizes/font_size = 11
+text = "Телеметрия и ML-профиль для Godot 4"
+
+[node name="TabContainer" type="TabContainer" parent="ScrollContainer/MainMargin/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Подключение" type="MarginContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="ConnectionVBox" type="VBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="NetworkButtons" type="HBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ConnectionSettingsBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/NetworkButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Настройки облака"
+
+[node name="CheckServerBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/NetworkButtons"]
+layout_mode = 2
+text = "Проверить"
+
+[node name="StatusPanel" type="PanelContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox"]
+layout_mode = 2
+
+[node name="StatusMargin" type="MarginContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/StatusPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="StatusVBox" type="VBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/StatusPanel/StatusMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ServerStatusLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/StatusPanel/StatusMargin/StatusVBox"]
+layout_mode = 2
+text = "Сервер: не проверялся"
+
+[node name="StatusLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/StatusPanel/StatusMargin/StatusVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.74, 0.78, 1)
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+text = ""
+
+[node name="ActionsTitle" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Действия"
+
+[node name="ActionGrid" type="GridContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="SendNowBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/ActionGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Отправить сейчас"
+
+[node name="ViewLogsBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/ActionGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Просмотр логов"
+
+[node name="FlushPendingBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/ActionGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Offline-очередь"
+
+[node name="ResetStatsBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/ActionGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Сбросить данные"
+
+[node name="Профиль" type="MarginContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="ProfileVBox" type="VBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="EventsBlock" type="VBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="EventsTitleLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/EventsBlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "События (имена для track)"
+
+[node name="EventsList" type="ItemList" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/EventsBlock"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+
+[node name="EventButtonsHBox" type="HBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/EventsBlock"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="AddEventBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/EventsBlock/EventButtonsHBox"]
+layout_mode = 2
+text = "Добавить"
+
+[node name="EditEventBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/EventsBlock/EventButtonsHBox"]
+layout_mode = 2
+text = "Изменить"
+
+[node name="DeleteEventBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/EventsBlock/EventButtonsHBox"]
+layout_mode = 2
+text = "Удалить"
+
+[node name="CopySnippetBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/EventsBlock/EventButtonsHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Копировать track()"
+
+[node name="CriticalBlock" type="VBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="CriticalPointTitleLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/CriticalBlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Критические точки (поля для ML)"
+
+[node name="CriticalPointsList" type="ItemList" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/CriticalBlock"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+
+[node name="CriticalPointButtonsHBox" type="HBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/CriticalBlock"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="AddCriticalPointBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/CriticalBlock/CriticalPointButtonsHBox"]
+layout_mode = 2
+text = "Добавить"
+
+[node name="EditCriticalPointBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/CriticalBlock/CriticalPointButtonsHBox"]
+layout_mode = 2
+text = "Изменить"
+
+[node name="DeleteCriticalPointBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/CriticalBlock/CriticalPointButtonsHBox"]
+layout_mode = 2
+text = "Удалить"
+
+[node name="ArchetypeBlock" type="VBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ArchetypeTitleLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/ArchetypeBlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Архетипы игроков"
+
+[node name="ArchetypeInputHBox" type="HBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/ArchetypeBlock"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ArchetypeNameInput" type="LineEdit" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/ArchetypeBlock/ArchetypeInputHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "explorer, casual, hardcore..."
+
+[node name="AddArchetypeBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/ArchetypeBlock/ArchetypeInputHBox"]
+layout_mode = 2
+text = "Добавить"
+
+[node name="ArchetypesList" type="ItemList" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/ArchetypeBlock"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+
+[node name="DeleteArchetypeBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox/ArchetypeBlock"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Удалить выбранный архетип"
+
+[node name="SaveMlProfileBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Профиль/ProfileVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Сохранить профиль на сервер"
+
+[node name="Мониторинг" type="MarginContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="MonitorVBox" type="VBoxContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SessionTitleLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Текущая сессия"
+
+[node name="StatsPanel" type="PanelContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox"]
+layout_mode = 2
+
+[node name="StatsMargin" type="MarginContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox/StatsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="StatsGrid" type="GridContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox/StatsPanel/StatsMargin"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 6
+columns = 2
+
+[node name="SessionIdLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox/StatsPanel/StatsMargin/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.72, 1)
+text = "ID сессии"
+
+[node name="SessionIdValue" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox/StatsPanel/StatsMargin/StatsGrid"]
+layout_mode = 2
+text = "—"
+
+[node name="BufferLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox/StatsPanel/StatsMargin/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.72, 1)
+text = "Буфер"
+
+[node name="BufferCountValue" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox/StatsPanel/StatsMargin/StatsGrid"]
+layout_mode = 2
+text = "0"
+
+[node name="PendingLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox/StatsPanel/StatsMargin/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.72, 1)
+text = "Offline"
+
+[node name="PendingCountValue" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox/StatsPanel/StatsMargin/StatsGrid"]
+layout_mode = 2
+text = "0"
+
+[node name="AdaptationTitleLabel" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Последняя адаптация ML"
+
+[node name="AdaptationPanel" type="PanelContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AdaptationMargin" type="MarginContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox/AdaptationPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="AdaptationValue" type="Label" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Мониторинг/MonitorVBox/AdaptationPanel/AdaptationMargin"]
+layout_mode = 2
+autowrap_mode = 3
+custom_minimum_size = Vector2(0, 64)
+text = "Пока нет данных от ML."

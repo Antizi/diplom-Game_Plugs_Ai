@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://08xsblkselaa"]
+
+[ext_resource type="Script" path="res://addons/analytics_plugin/ui/event_edit_dialog.gd" id="1_evdlg"]
+
+[node name="EventEditDialog" type="Window"]
+title = "Редактирование события"
+initial_position = 2
+size = Vector2i(420, 140)
+visible = false
+exclusive = true
+script = ExtResource("1_evdlg")
+
+[node name="MainMargin" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="MainVBox" type="VBoxContainer" parent="MainMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HintLabel" type="Label" parent="MainMargin/MainVBox"]
+layout_mode = 2
+text = "Название ключевой точки (event):"
+
+[node name="NameInput" type="LineEdit" parent="MainMargin/MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "dialog_choice"
+
+[node name="ButtonsHBox" type="HBoxContainer" parent="MainMargin/MainVBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="SaveBtn" type="Button" parent="MainMargin/MainVBox/ButtonsHBox"]
+layout_mode = 2
+text = "Сохранить"
+
+[node name="CancelBtn" type="Button" parent="MainMargin/MainVBox/ButtonsHBox"]
+layout_mode = 2
+text = "Отмена"

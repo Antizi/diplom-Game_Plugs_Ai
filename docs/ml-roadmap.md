@@ -1,5 +1,7 @@
 # ML-service: что сделано и что осталось
 
+> **Архитектурное решение:** ML только на сервере, без offline ONNX в Godot. См. [vision.md](vision.md).
+
 ## Текущее состояние
 
 | Компонент | Статус |
@@ -15,7 +17,7 @@
 ```text
 Godot → POST /telemetry/ingest (backend)
           → build_features_from_events()
-          → POST /predict (ml)  [если ML_PREDICT_ENABLED=true]
+          → POST /predict (ml)  [каждые bootstrap_actions событий]
           → adaptation в ответе ingest
 ```
 
@@ -27,44 +29,24 @@ Godot → POST /telemetry/ingest (backend)
 
 - [x] Экспорт **ONNX** (RandomForest, `ml/scripts/train_model.py`).
 - [x] Загрузка ONNX в `ml/main.py` (`onnxruntime`).
-- [x] Версионирование: `model_version` в ответе (`sklearn-rf-1.0`).
+- [x] Версионирование: `model_version` в ответе.
 - [x] Обучить на данных из Postgres (`ml/scripts/train_from_postgres.py`, `scripts/train-from-db.ps1`).
+- [x] `POST /train` в ML-сервисе — запуск из панели Godot и из backend `/game/train`.
+- [x] После обучения модель перезагружается без рестарта контейнера.
 - [ ] LSTM → ONNX и замена sklearn.
-- [ ] Регистрация артефакта в `game_models.onnx` на backend.
 
-### 2. Контракт `/predict` (расширение)
+### 2. Предсказания
 
-Сейчас тело:
-
-```json
-{
-  "session_id": "...",
-  "player_id": "...",
-  "features": { "time_sec": 12.0, "deaths": 1.0 },
-  "model_version": "optional",
-  "archetypes": ["explorer", "achiever"]
-}
-```
-
-Планируемые дополнения:
-
-- [ ] `POST /train` — дообучение по батчу (или отдельный offline-скрипт + загрузка артефакта).
+- [x] Предсказание каждые `bootstrap_actions` событий (10, 20, 30…) вместо однократного.
 - [ ] Валидация `features` по `feature_order` из профиля игры.
-- [ ] Явные коды ошибок, если модель не загружена.
 
 ### 3. Связка с backend
 
-- [ ] Backend: при успешном train — обновить `game_models` и `GET /game/model/manifest`.
-- [ ] Плагин (будущее): скачивание ONNX для local-режима.
+- [x] `POST /game/train` в backend — проксирует запрос в ML-сервис.
+- [x] Cloud-only режим — локальный ONNX и локальный режим удалены.
 - [ ] Метрики: логировать latency `/predict`, fallback rate.
 
-### 4. Пайплайн обучения (Anton)
-
-- [ ] Скрипт `ml/scripts/train.py`: читает события из Postgres → датасет → train → ONNX.
-- [ ] CI/job: периодическое переобучение (опционально).
-- [ ] Документировать зависимость `feature_order` ↔ `critical_points` в Godot.
-
-### 5. LSTM (`ml/research/lstm`)
+### 4. LSTM (`ml/research/lstm`)
 
 - [ ] Привести выход прототипа к тем же `archetypes`, что в профиле игры.
 - [ ] Экспорт в ONNX и проверка в `onnxruntime`.
