@@ -1,0 +1,36 @@
+flowchart TB
+    subgraph input [Входные данные]
+        E1["Событие 1: enemy_killed"]
+        E2["Событие 2: item_collected"]
+        ET["..."]
+        ET2["Событие T: level_complete"]
+    end
+
+    subgraph encode [Кодирование]
+        VOC["Словарь vocab<br/>idx + lengths"]
+    end
+
+    subgraph model [QuestLSTM PyTorch]
+        EMB["Embedding<br/>dim = 32"]
+        LSTM["LSTM<br/>hidden = 64"]
+        POOL["Mean Pooling<br/>h = avg(h_t)"]
+        FC1["Linear 64 → 32"]
+        RELU["ReLU"]
+        FC2["Linear 32 → K"]
+        SM["Softmax"]
+    end
+
+    subgraph output [Выход]
+        ARCH["Архетип игрока"]
+        CONF["confidence = max(p_k)"]
+        ADAPT["Параметры адаптации"]
+    end
+
+    E1 --> VOC
+    E2 --> VOC
+    ET --> VOC
+    ET2 --> VOC
+    VOC --> EMB --> LSTM --> POOL --> FC1 --> RELU --> FC2 --> SM
+    SM --> ARCH
+    SM --> CONF
+    ARCH --> ADAPT
