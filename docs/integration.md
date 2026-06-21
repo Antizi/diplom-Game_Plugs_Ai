@@ -1,13 +1,18 @@
 # Интеграция Godot-плагина и JSON для API телеметрии
 
-## Установка аддона (без project.godot в репозитории)
+## Установка аддона в новый Godot-проект
 
-1. Скопируйте `godot-plugin/addons/analytics_plugin/` в `ваш_проект/addons/analytics_plugin/`.
-2. **Project → Project Settings → Plugins** → включите **Analytics Plugin**.
+Полная пошаговая инструкция (копирование, autoload, ML-профиль, варианты интеграции, troubleshooting): **[godot-plugin/README.md](../godot-plugin/README.md)**.
+
+Кратко:
+
+1. Скопируйте `godot-plugin/addons/analytics_plugin/` → `ваш_проект/addons/analytics_plugin/`.
+2. **Project → Project Settings → Plugins** → **Analytics Plugin** → Enable.
 3. Autoload `Analytics` создаётся плагином автоматически.
-4. Панель **Analytics** → cloud URL: `http://localhost:8000/telemetry/ingest`.
+4. Панель **Analytics** → **Настроить облачный режим** → URL: `http://localhost:8000/telemetry/ingest`.
+5. Вкладка **Профиль** → critical points + **Сохранить ML профиль** (см. [E2E.md](E2E.md)).
 
-Шаблон кода: `godot-plugin/examples/game_manager.gd`. Подробнее: [godot-plugin/README.md](../godot-plugin/README.md).
+Шаблоны кода: `godot-plugin/examples/game_manager.gd`, встроенные `game/adaptation_bridge.gd` и `game/game_manager.gd` в аддоне.
 
 ---
 

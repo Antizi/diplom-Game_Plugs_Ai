@@ -79,6 +79,10 @@ text = "Настройки облака"
 layout_mode = 2
 text = "Проверить"
 
+[node name="TrainModelBtn" type="Button" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox/NetworkButtons"]
+layout_mode = 2
+text = "Обучить модель"
+
 [node name="StatusPanel" type="PanelContainer" parent="ScrollContainer/MainMargin/MainVBox/TabContainer/Подключение/ConnectionVBox"]
 layout_mode = 2
 

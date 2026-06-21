@@ -31,10 +31,7 @@ services:
       DB_NAME: gamedb
       ML_SERVICE_URL: http://ml:8001
       ML_PREDICT_ENABLED: ${ML_PREDICT_ENABLED:-true}
-      MODELS_DIR: /app/models
       CORS_ORIGINS: "*"
-    volumes:
-      - models_data:/app/models
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,8 +46,12 @@ services:
       - "8001:8001"
     environment:
       MODELS_DIR: /app/models
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/gamedb
     volumes:
-      - ./ml/models:/app/models
+      - models_data:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:

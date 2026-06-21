@@ -13,6 +13,11 @@ router = APIRouter(prefix="/sessions", tags=["sessions"])
     "/{session_id}/prediction/latest",
     response_model=schemas.PredictionRecordOut,
     summary="Последнее предсказание для сессии",
+    description=(
+        "Возвращает последнюю запись предсказания: архетип, уверенность модели, "
+        "вектор признаков и рекомендованную адаптацию в поле `result`. "
+        "Используется для отладки и в панели просмотра логов Godot-плагина."
+    ),
 )
 def get_latest_prediction(session_id: UUID, db: Session = Depends(get_db)):
     prediction = (

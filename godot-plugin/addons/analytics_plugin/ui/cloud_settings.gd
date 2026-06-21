@@ -104,7 +104,6 @@ func _update_settings_from_ui():
 	current_settings["auto_send_interval"] = int(interval_spin.value)
 	current_settings["retry_on_error"] = retry_check.button_pressed
 	current_settings["cache_when_offline"] = cache_check.button_pressed
-	current_settings["mode"] = "cloud"
 
 func _on_save_pressed():
 	_update_settings_from_ui()

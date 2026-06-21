@@ -117,9 +117,12 @@ def get_recent_session_events(
 def should_trigger_prediction(
     total_events: int,
     bootstrap_actions: int,
-    already_predicted: bool,
+    existing_prediction_count: int,
 ) -> bool:
-    return not already_predicted and total_events >= bootstrap_actions
+    """Срабатывает каждые bootstrap_actions событий: при 10, 20, 30..."""
+    if bootstrap_actions <= 0:
+        return False
+    return total_events // bootstrap_actions > existing_prediction_count
 
 
 def process_ingest(
@@ -148,14 +151,13 @@ def process_ingest(
     db.flush()
 
     total_events = count_session_events(db, session_id)
-    existing_prediction = (
+    prediction_count = (
         db.query(models.Prediction)
         .filter(
             models.Prediction.session_id == session_id,
             models.Prediction.predicted_archetype.isnot(None),
         )
-        .order_by(models.Prediction.created_at.desc())
-        .first()
+        .count()
     )
 
     prediction_out: Optional[schemas.PredictionOut] = None
@@ -164,7 +166,7 @@ def process_ingest(
     if should_trigger_prediction(
         total_events,
         ctx["bootstrap_actions"],
-        existing_prediction is not None,
+        prediction_count,
     ):
         event_dicts = get_recent_session_events(
             db, session_id, ctx["bootstrap_actions"]

@@ -95,14 +95,13 @@ class GameProfileOut(APIModel):
     feature_schema: Dict[str, Any] = Field(default_factory=dict)
 
 
-class ModelManifestOut(APIModel):
+# ---------- Train ----------
+class TrainOut(APIModel):
+    status: str
+    samples: int
+    train_accuracy: float
+    test_accuracy: float
     model_version: str
-    game_profile_version: int
-    feature_schema_version: int
-    format: str = "onnx"
-    sha256: Optional[str] = None
-    download_url: str
-    created_at: datetime
 
 
 # ---------- Predictions ----------

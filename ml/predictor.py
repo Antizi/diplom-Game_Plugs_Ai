@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent
 MODELS_DIR = Path(os.getenv("MODELS_DIR", str(ROOT / "models")))
@@ -55,6 +58,24 @@ class PredictorEngine:
 
     def _vectorize(self, features: Dict[str, float]) -> np.ndarray:
         order: List[str] = self._meta.get("feature_order", [])
+
+        if not order:
+            logger.warning("feature_order пуст в model_meta.json — используем отсортированные ключи features")
+            order = sorted(features.keys())
+
+        missing = [k for k in order if k not in features]
+        extra = [k for k in features if k not in order]
+
+        if missing:
+            logger.warning("features отсутствуют во входных данных (будут 0.0): %s", missing)
+        if extra:
+            logger.warning("features не входят в feature_order и будут проигнорированы: %s", extra)
+        if missing and len(missing) == len(order):
+            logger.error(
+                "ВСЕ features отсутствуют — предсказание выполняется из нулевого вектора. "
+                "Проверьте согласованность critical_points в профиле игры и модели."
+            )
+
         row = [float(features.get(name, 0.0)) for name in order]
         return np.array([row], dtype=np.float32)
 
@@ -98,7 +119,8 @@ class PredictorEngine:
                 predicted = archetypes[label % len(archetypes)]
 
             if probs is not None:
-                confidence = float(max(probs))
+                prob_values = list(probs.values()) if isinstance(probs, dict) else list(probs)
+                confidence = float(max(prob_values))
                 confidence = min(1.0, max(0.0, confidence))
             else:
                 confidence = 0.7

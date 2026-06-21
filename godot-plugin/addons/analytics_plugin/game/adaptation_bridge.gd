@@ -11,14 +11,16 @@ signal difficulty_changed(difficulty: float)
 
 
 func _ready() -> void:
-	if not Analytics:
+	var analytics = get_node_or_null("/root/Analytics")
+	if not analytics:
 		push_warning("AdaptationBridge: включите Analytics Plugin и autoload Analytics")
 		return
-	if not Analytics.adaptation_received.is_connected(_on_adaptation_received):
-		Analytics.adaptation_received.connect(_on_adaptation_received)
-	var last = Analytics.get_last_adaptation() if Analytics.has_method("get_last_adaptation") else {}
-	if not last.is_empty():
-		_apply_adaptation(last)
+	if not analytics.adaptation_received.is_connected(_on_adaptation_received):
+		analytics.adaptation_received.connect(_on_adaptation_received)
+	if analytics.has_method("get_last_adaptation"):
+		var last: Dictionary = analytics.get_last_adaptation()
+		if not last.is_empty():
+			_apply_adaptation(last)
 
 
 func _on_adaptation_received(adaptation: Dictionary) -> void:
