@@ -57,6 +57,6 @@ addons/analytics_plugin/
 
 ## Тестирование без своей игры
 
-1. Создайте пустой Godot 4 проект локально (`.godot` не коммитится).
-2. Скопируйте `addons/analytics_plugin/`.
-3. Включите плагин, настройте URL, повесьте [examples/test_integration.gd](examples/test_integration.gd) на Node в сцене.
+Тестовая игра **Telemetry Arena** в `prototip-plugina-1/`: откройте проект, настройте URL в панели Analytics, **F5** → «Новая игра».
+
+Для своего проекта: скопируйте `addons/analytics_plugin/` и при необходимости `examples/test_integration.gd`.
