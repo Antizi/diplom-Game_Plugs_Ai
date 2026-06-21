@@ -1,0 +1,156 @@
+[gd_scene load_steps=7 format=3 uid="uid://telemetryarena1"]
+
+[ext_resource type="Script" path="res://test_game/game.gd" id="1_game"]
+[ext_resource type="Script" path="res://test_game/player.gd" id="2_player"]
+[ext_resource type="Script" path="res://addons/analytics_plugin/game/adaptation_bridge.gd" id="3_bridge"]
+[ext_resource type="Script" path="res://test_game/enemy_spawner.gd" id="4_spawner"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
+radius = 18.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.12, 0.13, 0.16, 0.92)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 16.0
+content_margin_top = 14.0
+content_margin_right = 16.0
+content_margin_bottom = 14.0
+
+[node name="Game" type="Node2D"]
+script = ExtResource("1_game")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(380, 260)
+
+[node name="ArenaFloor" type="Polygon2D" parent="."]
+color = Color(0.08, 0.09, 0.11, 1)
+polygon = PackedVector2Array(0, 0, 760, 0, 760, 520, 0, 520)
+
+[node name="ArenaBorder" type="Line2D" parent="."]
+points = PackedVector2Array(0, 0, 760, 0, 760, 520, 0, 520, 0, 0)
+width = 3.0
+default_color = Color(0.35, 0.4, 0.48, 1)
+
+[node name="AdaptationBridge" type="Node" parent="."]
+script = ExtResource("3_bridge")
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(380, 260)
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("2_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+shape = SubResource("CircleShape2D_player")
+
+[node name="Visual" type="Polygon2D" parent="Player"]
+color = Color(0.4, 0.65, 1, 1)
+polygon = PackedVector2Array(0, -18, 16, 14, -16, 14)
+
+[node name="Collectibles" type="Node2D" parent="."]
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="EnemySpawner" type="Node" parent="."]
+script = ExtResource("4_spawner")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Menu" type="PanelContainer" parent="CanvasLayer"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -120.0
+offset_right = 220.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/Menu"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="CanvasLayer/Menu/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Telemetry Arena"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="CanvasLayer/Menu/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.74, 0.78, 1)
+theme_override_font_sizes/font_size = 11
+text = "Тест плагина Analytics"
+horizontal_alignment = 1
+
+[node name="HintLabel" type="Label" parent="CanvasLayer/Menu/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+autowrap_mode = 3
+text = "WASD — движение. Собирайте зелёные орбы, избегайте красных врагов. События уходят в Analytics."
+
+[node name="NewGameBtn" type="Button" parent="CanvasLayer/Menu/VBox"]
+layout_mode = 2
+text = "Новая игра"
+
+[node name="QuitBtn" type="Button" parent="CanvasLayer/Menu/VBox"]
+layout_mode = 2
+text = "Выход"
+
+[node name="HUD" type="PanelContainer" parent="CanvasLayer"]
+visible = false
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 130.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="CanvasLayer/HUD"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="StatsRow" type="HBoxContainer" parent="CanvasLayer/HUD/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="ScoreLabel" type="Label" parent="CanvasLayer/HUD/Margin/VBox/StatsRow"]
+layout_mode = 2
+text = "Очки: 0"
+
+[node name="DeathsLabel" type="Label" parent="CanvasLayer/HUD/Margin/VBox/StatsRow"]
+layout_mode = 2
+text = "Смерти: 0"
+
+[node name="TimeLabel" type="Label" parent="CanvasLayer/HUD/Margin/VBox/StatsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Время: 0 с"
+
+[node name="AdaptLabel" type="Label" parent="CanvasLayer/HUD/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.8, 0.85, 1)
+theme_override_font_sizes/font_size = 11
+text = "ML: —"
+
+[node name="EndSessionBtn" type="Button" parent="CanvasLayer/HUD/Margin/VBox"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Завершить сессию"
