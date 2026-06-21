@@ -63,7 +63,7 @@ def plot_bartle_quadrant(out: Path) -> None:
         (0.55, 0.55, "Explorer\n(исследователь)", "#3b82f6"),
         (0.55, -0.55, "Achiever\n(достигатель)", "#059669"),
         (-0.55, 0.55, "Socializer\n(социализатор)", "#f59e0b"),
-        (-0.55, -0.55, "Killer\n(убийца)", "#dc2626"),
+        (-0.55, -0.55, "Fighter\n(боец)", "#dc2626"),
     ]
     for x, y, label, color in archetypes:
         ax.add_patch(Circle((x, y), 0.35, facecolor=color, alpha=0.25, edgecolor=color, lw=2))
@@ -244,7 +244,7 @@ def plot_db_schema(out: Path) -> None:
 
 def plot_adaptation_params(out: Path) -> None:
     archetypes = list(ADAPTATION.keys())
-    labels_ru = ["Исследователь", "Достигатель", "Социализатор", "Убийца"]
+    labels_ru = ["Исследователь", "Достигатель", "Социализатор", "Боец"]
     params = ["difficulty", "enemy_density", "loot_multiplier"]
     titles = ["Сложность", "Плотность врагов", "Множитель лута"]
     colors = ["#3b82f6", "#059669", "#f59e0b", "#dc2626"]

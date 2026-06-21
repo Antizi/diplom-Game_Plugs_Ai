@@ -45,7 +45,7 @@ Invoke-WebRequest http://localhost:8001/health -UseBasicParsing
 
 | Название события | Описание |
 |-----------------|----------|
-| `enemy_killed` | Убийство врага |
+| `enemy_killed` | Уничтожение врага |
 | `item_collected` | Подбор предмета |
 | `level_complete` | Завершение уровня |
 
